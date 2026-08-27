@@ -22,3 +22,30 @@ implements most or all of the software components and functionality while remote
 clients access the server (server-client architectures) and **decentralized** or
 **peer-to-peer (P2P)** architectures in which each vertex in the graph is of an
 equivalent class.  We will also include examples of real-world **hybrid architectures**.
+
+---
+
+## 2.1 Architectural Styles
+
+**Def: _Software Architecture_**: the logical organization of a distributed system
+into software components
+
+**Def: _Architectural Style_**: the way that software components are connected to each
+other, how they exchange data, and how they are configured into a system
+
+**Component**: A modular unit with well-defined required and provided **interfaces**
+such that it is _replaceable_ within its environment.
+
+- _replacement_ must be able to occur while the rest of the system runs
+- **interfaces** must not change
+- It is often impossible to shut down the system for maintenance
+
+**Connector**: a mechanism that mediates communication, coordination, or cooperation
+among components
+
+### Key Architectural Styles
+
+- Layered Architectures
+- Object-based architectures
+- Resource-centered architectures
+- Event-based architectures
