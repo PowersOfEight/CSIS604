@@ -47,7 +47,7 @@ among components
 
 - Layered Architectures
 - Object-based architectures
-- Resource-centered architectures
+- Resource-centered architectures (see [CRUD Operations](#crud-operations))
 - Event-based architectures
 
 In the real world, many different architectural styles are combined, and notably, almost
@@ -170,9 +170,12 @@ This is where we get into my dear friend, **Representational State Transfer (RES
 
 There are four key characteristics of what are known as **RESTful Architectures**:
 
-1. Resources are identified through a single naming scheme
-2. All services offer the same interface, consisting of at most four operations
-NOTE: I really disagree with it being exactly 4, `PATCH` and _upsert_ have different semantic meanings but are sub-categories of the update operations
+1. Resources are identified through a single naming scheme (**namespace consistency**)
+2. All services offer the same interface, consisting of at most four operations ([**CRUD operations**](#crud-operations)) [^1]
+3. Requests to and responses from a service are _self-descriptive_. (**self-documenting**)
+4. A service _forgets_ or simply _does not permanently store_ information about the caller ([**stateles execution**](#stateless-execution))
+
+#### <span id="crud-operations">The four main CRUD REST operations</span>
 
 | **Operation** | **Description** |
 | --- | --- |
@@ -180,3 +183,7 @@ NOTE: I really disagree with it being exactly 4, `PATCH` and _upsert_ have diffe
 | `POST` | Create a new resource |
 | `GET` | Retrieve the state of a resource in some representation |
 | `DELETE` | Delete a resource |
+
+[^1]: I really disagree with it being exactly 4, `PATCH` and _upsert_ have different semantic meanings but are sub-categories of the update operations
+
+An example of RESTful is Amazon's **Simple Storage Service (Amazon S3)**
