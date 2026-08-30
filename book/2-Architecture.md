@@ -186,4 +186,9 @@ There are four key characteristics of what are known as **RESTful Architectures*
 
 [^1]: I really disagree with it being exactly 4, `PATCH` and _upsert_ have different semantic meanings but are sub-categories of the update operations
 
-An example of RESTful is Amazon's **Simple Storage Service (Amazon S3)**
+An example of RESTful is Amazon's **Simple Storage Service (Amazon S3)**.  S3 defines
+two resources _objects_(files) and _buckets_(directories).  Buckets can not be moved
+recursively into other buckets, and the URI (uniform resource identifier) serves as
+the interface to move a file into a bucket.  As an example in the book, they provide
+that an object named `ObjectName` contained in the bucket named `Bucketname` is referred
+to by the uri `http://s3.amazonaws.com/BucketName/Objectname`
