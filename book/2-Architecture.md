@@ -114,4 +114,69 @@ The protocol governs
 #### Service Example
 
 The service is made available in the form of a relatively simple programming interface
-which contains calls to set up a connection, send and recieve messages, and to tear down the connections again.
+which contains calls to set up a connection, send and receive messages, and to tear down the connections again.
+Check out the [server](../python-workspace/client-server/server.py) and [client](../python-workspace/client-server/client.py) code examples
+
+### Application Layering
+
+Three logical levels as referred to above
+
+1. The application interface layer (Provider layer)
+2. The processing level (Service or Domain layer)
+3. The data layer (Data Access Layer)
+
+### Object-based and service-oriented architectures
+
+**Object-based architectures** are a more loose architectural style.  Each object corresponds
+to a component, and these components are connected through a _procedure call mechanism_.  
+In the case of distributed systems, the procedure called does not need to take place
+on the same object that calls it (such as in RPC).
+
+Object based architectures are attractive for the same reasons that OOP is often an attractive
+design paradigm: the architecture provides a mechanism for _encapsulating_ data or state.
+
+As compared to the layered architectural style, which mostly resembles the functional programming
+paradigm, this architectural style has the state live within the host object which operates on it
+via its _methods_.  The **interface** provided by an object conceals the implementation details,
+and thus we consider the object completely independent of its environment. As with components,
+this means that the interface's contract is adequately defined to the extent that the object
+is modular and replaceable.
+
+The organization of multiple objects together in a graph is often referred to as a **distributed object**
+or **remote object**.  
+
+When a client **binds** to a distributed object, and implementation of the objects interface (**proxy**)
+is then loaded into the client's address space.  A proxy is analogous to a client stub in RPC systems.
+It's sole task is to marshal method invocations into messages and unmarshal reply messages.  (a thin interface)
+This thin interface is often referred to as a **skeleton** and serves as the bare means of letting the Middleware
+access user-defined objects.  In practice, it often contains incomplete code that the developer must further
+specialize to meet their needs.
+
+Most often, (and counterintuitively so), the **state** of a distributed object is **_not distributed_**, rather
+it resides on a single machine.  The interfaces may live on the other machines, and these are what we call
+**remote objects**.
+
+**Encapsulation**: the attribute of an object that is realized as a _self-contained_ entity.
+
+Clearly separating the various services such that they can operate independently allows
+for the existence of **service-oriented architectures (SOAs)**.
+
+We can see through this architecture that a central component of developing a distributed system
+is to solve the problem of _service composition_ and orchestration.
+
+### Resource-based Architectures
+
+This is where we get into my dear friend, **Representational State Transfer (REST)**.
+
+There are four key characteristics of what are known as **RESTful Architectures**:
+
+1. Resources are identified through a single naming scheme
+2. All services offer the same interface, consisting of at most four operations
+NOTE: I really disagree with it being exactly 4, `PATCH` and _upsert_ have different semantic meanings but are sub-categories of the update operations
+
+| **Operation** | **Description** |
+| --- | --- |
+| `PUT` | Modify a resource by transferring a new state |
+| `POST` | Create a new resource |
+| `GET` | Retrieve the state of a resource in some representation |
+| `DELETE` | Delete a resource |
