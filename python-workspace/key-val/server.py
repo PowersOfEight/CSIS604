@@ -30,6 +30,12 @@ class KeyValueServer(key_val_pb2_grpc.KeyValueStoreServicer):
             message=f"Successfully put {key}:{value} into the store!"
         )
 
+    def GetKey(self, request, context):
+        key = request.key
+        if key in self.store:
+            return key_val_pb2.GetResponse(value=self.store[key])
+        return key_val_pb2.GetResponse()
+
 
 def serve():
     port = "50051"

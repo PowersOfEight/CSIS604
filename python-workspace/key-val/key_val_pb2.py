@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rkey-val.proto\"(\n\nPutRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"\x1e\n\x0bPutResponse\x12\x0f\n\x07message\x18\x01 \x01(\t26\n\rKeyValueStore\x12%\n\x06PutKey\x12\x0b.PutRequest\x1a\x0c.PutResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rkey-val.proto\"(\n\nPutRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"\x1e\n\x0bPutResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\"\x19\n\nGetRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\"\x1c\n\x0bGetResponse\x12\r\n\x05value\x18\x01 \x01(\t2]\n\rKeyValueStore\x12%\n\x06PutKey\x12\x0b.PutRequest\x1a\x0c.PutResponse\"\x00\x12%\n\x06GetKey\x12\x0b.GetRequest\x1a\x0c.GetResponse\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -35,6 +35,10 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_PUTREQUEST']._serialized_end=57
   _globals['_PUTRESPONSE']._serialized_start=59
   _globals['_PUTRESPONSE']._serialized_end=89
-  _globals['_KEYVALUESTORE']._serialized_start=91
-  _globals['_KEYVALUESTORE']._serialized_end=145
+  _globals['_GETREQUEST']._serialized_start=91
+  _globals['_GETREQUEST']._serialized_end=116
+  _globals['_GETRESPONSE']._serialized_start=118
+  _globals['_GETRESPONSE']._serialized_end=146
+  _globals['_KEYVALUESTORE']._serialized_start=148
+  _globals['_KEYVALUESTORE']._serialized_end=241
 # @@protoc_insertion_point(module_scope)

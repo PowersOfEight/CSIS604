@@ -39,12 +39,23 @@ class KeyValueStoreStub:
                 request_serializer=key__val__pb2.PutRequest.SerializeToString,
                 response_deserializer=key__val__pb2.PutResponse.FromString,
                 _registered_method=True)
+        self.GetKey = channel.unary_unary(
+                '/KeyValueStore/GetKey',
+                request_serializer=key__val__pb2.GetRequest.SerializeToString,
+                response_deserializer=key__val__pb2.GetResponse.FromString,
+                _registered_method=True)
 
 
 class KeyValueStoreServicer:
     """Missing associated documentation comment in .proto file."""
 
     def PutKey(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetKey(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -57,6 +68,11 @@ def add_KeyValueStoreServicer_to_server(servicer, server):
                     servicer.PutKey,
                     request_deserializer=key__val__pb2.PutRequest.FromString,
                     response_serializer=key__val__pb2.PutResponse.SerializeToString,
+            ),
+            'GetKey': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetKey,
+                    request_deserializer=key__val__pb2.GetRequest.FromString,
+                    response_serializer=key__val__pb2.GetResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -86,6 +102,33 @@ class KeyValueStore:
             '/KeyValueStore/PutKey',
             key__val__pb2.PutRequest.SerializeToString,
             key__val__pb2.PutResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetKey(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/KeyValueStore/GetKey',
+            key__val__pb2.GetRequest.SerializeToString,
+            key__val__pb2.GetResponse.FromString,
             options,
             channel_credentials,
             insecure,

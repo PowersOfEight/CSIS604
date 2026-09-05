@@ -13,6 +13,15 @@ message PutResponse {
   string message = 1;
 }
 
+message GetRequest {
+  string key = 1;
+}
+
+message GetResponse {
+  string value = 1;
+}
+
 service KeyValueStore {
   rpc PutKey (PutRequest) returns (PutResponse) {}
+  rpc GetKey (GetRequest) returns (GetResponse) {}
 }
