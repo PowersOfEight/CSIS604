@@ -44,6 +44,11 @@ class KeyValueStoreStub:
                 request_serializer=key__val__pb2.GetRequest.SerializeToString,
                 response_deserializer=key__val__pb2.GetResponse.FromString,
                 _registered_method=True)
+        self.DeleteKey = channel.unary_unary(
+                '/KeyValueStore/DeleteKey',
+                request_serializer=key__val__pb2.DeleteRequest.SerializeToString,
+                response_deserializer=key__val__pb2.DeleteResponse.FromString,
+                _registered_method=True)
 
 
 class KeyValueStoreServicer:
@@ -61,6 +66,12 @@ class KeyValueStoreServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def DeleteKey(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_KeyValueStoreServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -73,6 +84,11 @@ def add_KeyValueStoreServicer_to_server(servicer, server):
                     servicer.GetKey,
                     request_deserializer=key__val__pb2.GetRequest.FromString,
                     response_serializer=key__val__pb2.GetResponse.SerializeToString,
+            ),
+            'DeleteKey': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteKey,
+                    request_deserializer=key__val__pb2.DeleteRequest.FromString,
+                    response_serializer=key__val__pb2.DeleteResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -129,6 +145,33 @@ class KeyValueStore:
             '/KeyValueStore/GetKey',
             key__val__pb2.GetRequest.SerializeToString,
             key__val__pb2.GetResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeleteKey(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/KeyValueStore/DeleteKey',
+            key__val__pb2.DeleteRequest.SerializeToString,
+            key__val__pb2.DeleteResponse.FromString,
             options,
             channel_credentials,
             insecure,

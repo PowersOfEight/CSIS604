@@ -36,6 +36,18 @@ class KeyValueServer(key_val_pb2_grpc.KeyValueStoreServicer):
             return key_val_pb2.GetResponse(value=self.store[key])
         return key_val_pb2.GetResponse()
 
+    def DeleteKey(self, request, context):
+        key = request.key
+        if key in self.store:
+            val = self.store.pop(key)
+            return key_val_pb2.DeleteResponse(
+                message=f"Successfully removed entry {key}:{val} from the store."
+            )
+        else:
+            return key_val_pb2.DeleteResponse(
+                message=f'Key "{key}" not found in the store.'
+            )
+
 
 def serve():
     port = "50051"

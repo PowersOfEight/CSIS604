@@ -21,7 +21,15 @@ message GetResponse {
   string value = 1;
 }
 
+message DeleteRequest {
+  string key = 1;
+}
+
+message DeleteResponse {
+  string message = 1;
+}
 service KeyValueStore {
   rpc PutKey (PutRequest) returns (PutResponse) {}
   rpc GetKey (GetRequest) returns (GetResponse) {}
+  rpc DeleteKey (DeleteRequest) returns (DeleteResponse) {}
 }
