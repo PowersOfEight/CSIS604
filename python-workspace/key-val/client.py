@@ -4,8 +4,9 @@
 """
 
 import argparse
+from collections.abc import Iterator
 import logging
-from grpc import insecure_channel
+from grpc import RpcError, StatusCode, insecure_channel
 from key_val_pb2 import (
     GetResponse,
     PutRequest,
@@ -13,6 +14,8 @@ from key_val_pb2 import (
     DeleteResponse,
     DeleteRequest,
     PutResponse,
+    WatchRequest,
+    WatchResponse,
 )
 from key_val_pb2_grpc import KeyValueStoreStub
 
@@ -34,8 +37,17 @@ class KeyValueClient:
         request = DeleteRequest(key=key)
         return self.stub.DeleteKey(request=request)
 
+    def doWatch(self, key: str, timeout: float | None) -> Iterator[WatchResponse]:
+        deadline = timeout if timeout is not None else 30.0
+        request = WatchRequest(key=key)
+        return self.stub.WatchKey(request=request, timeout=deadline)
+
+    def close(self) -> None:
+        self.channel.close()
+
 
 def run():
+    watch_timeout = 30.0  # Default watch period is 30 seconds
     client = KeyValueClient()
     parser = argparse.ArgumentParser(description="Key-Value Store Client CLI")
 
@@ -59,6 +71,15 @@ def run():
         "key", type=str, help="The key of the key-value pair to delete"
     )
 
+    watch_parser = subparsers.add_parser("watch", help="Watch a given key for updates")
+    watch_parser.add_argument("key", type=str, help="The key to watch")
+    watch_parser.add_argument(
+        "--timeout",
+        type=float,
+        default=watch_timeout,
+        help=f"The timeout for the watcher. Default wait time is {watch_timeout} seconds",
+    )
+
     args = parser.parse_args()
 
     match args.command:
@@ -74,6 +95,33 @@ def run():
         case "delete":
             response = client.doDelete(key=args.key)
             print(f"{response.message}")
+        case "watch":
+            timeout = args.timeout if args.timeout is not None else watch_timeout
+            try:
+                stream = client.doWatch(key=args.key, timeout=timeout)
+                for response in stream:
+                    update = response.update
+                    old = update.old
+                    new = update.new
+                    if old.exists and not new.exists:  # delete
+                        print(
+                            f"Deleted entry '{old.key}' from the store.\nUpdate: {old.key}:{old.value}->None"
+                        )
+                    elif new.exists and not old.exists:  # Upserted
+                        print(
+                            f"Added entry '{new.key}' to the store.\nUpdate: None -> {new.key}:{new.value}"
+                        )
+                    else:  # Update
+                        print(
+                            f"Updated entry '{new.key}'.\nUpdate: {old.key}:{old.value}->{new.key}:{new.value}"
+                        )
+            except RpcError as e:
+                if e.code() == StatusCode.DEADLINE_EXCEEDED:
+                    print(f"Watcher stopped because the timeout has been reached")
+                else:
+                    print(f"Stream error: {e.details()}")
+
+    client.close()
 
 
 if __name__ == "__main__":

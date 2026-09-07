@@ -49,6 +49,11 @@ class KeyValueStoreStub:
                 request_serializer=key__val__pb2.DeleteRequest.SerializeToString,
                 response_deserializer=key__val__pb2.DeleteResponse.FromString,
                 _registered_method=True)
+        self.WatchKey = channel.unary_stream(
+                '/KeyValueStore/WatchKey',
+                request_serializer=key__val__pb2.WatchRequest.SerializeToString,
+                response_deserializer=key__val__pb2.WatchResponse.FromString,
+                _registered_method=True)
 
 
 class KeyValueStoreServicer:
@@ -72,6 +77,12 @@ class KeyValueStoreServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def WatchKey(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_KeyValueStoreServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -89,6 +100,11 @@ def add_KeyValueStoreServicer_to_server(servicer, server):
                     servicer.DeleteKey,
                     request_deserializer=key__val__pb2.DeleteRequest.FromString,
                     response_serializer=key__val__pb2.DeleteResponse.SerializeToString,
+            ),
+            'WatchKey': grpc.unary_stream_rpc_method_handler(
+                    servicer.WatchKey,
+                    request_deserializer=key__val__pb2.WatchRequest.FromString,
+                    response_serializer=key__val__pb2.WatchResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -172,6 +188,33 @@ class KeyValueStore:
             '/KeyValueStore/DeleteKey',
             key__val__pb2.DeleteRequest.SerializeToString,
             key__val__pb2.DeleteResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def WatchKey(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/KeyValueStore/WatchKey',
+            key__val__pb2.WatchRequest.SerializeToString,
+            key__val__pb2.WatchResponse.FromString,
             options,
             channel_credentials,
             insecure,

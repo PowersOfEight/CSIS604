@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rkey-val.proto\"(\n\nPutRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"\x1e\n\x0bPutResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\"\x19\n\nGetRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\"\x1c\n\x0bGetResponse\x12\r\n\x05value\x18\x01 \x01(\t\"\x1c\n\rDeleteRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\"!\n\x0e\x44\x65leteResponse\x12\x0f\n\x07message\x18\x01 \x01(\t2\x8d\x01\n\rKeyValueStore\x12%\n\x06PutKey\x12\x0b.PutRequest\x1a\x0c.PutResponse\"\x00\x12%\n\x06GetKey\x12\x0b.GetRequest\x1a\x0c.GetResponse\"\x00\x12.\n\tDeleteKey\x12\x0e.DeleteRequest\x1a\x0f.DeleteResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rkey-val.proto\"(\n\nPutRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"/\n\x0bPutResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x0f\n\x07success\x18\x02 \x01(\x08\"\x19\n\nGetRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\"8\n\x0bGetResponse\x12\r\n\x05value\x18\x01 \x01(\t\x12\x1a\n\x05state\x18\x02 \x01(\x0b\x32\x0b.EntryState\"\x1c\n\rDeleteRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\"2\n\x0e\x44\x65leteResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x0f\n\x07success\x18\x02 \x01(\x08\"\x1b\n\x0cWatchRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\"-\n\rWatchResponse\x12\x1c\n\x06update\x18\x01 \x01(\x0b\x32\x0c.UpdateEvent\"8\n\nEntryState\x12\x0e\n\x06\x65xists\x18\x01 \x01(\x08\x12\x0b\n\x03key\x18\x02 \x01(\t\x12\r\n\x05value\x18\x03 \x01(\t\"A\n\x0bUpdateEvent\x12\x18\n\x03old\x18\x01 \x01(\x0b\x32\x0b.EntryState\x12\x18\n\x03new\x18\x02 \x01(\x0b\x32\x0b.EntryState2\xb4\x01\n\rKeyValueStore\x12#\n\x06PutKey\x12\x0b.PutRequest\x1a\x0c.PutResponse\x12#\n\x06GetKey\x12\x0b.GetRequest\x1a\x0c.GetResponse\x12,\n\tDeleteKey\x12\x0e.DeleteRequest\x1a\x0f.DeleteResponse\x12+\n\x08WatchKey\x12\r.WatchRequest\x1a\x0e.WatchResponse0\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -34,15 +34,23 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_PUTREQUEST']._serialized_start=17
   _globals['_PUTREQUEST']._serialized_end=57
   _globals['_PUTRESPONSE']._serialized_start=59
-  _globals['_PUTRESPONSE']._serialized_end=89
-  _globals['_GETREQUEST']._serialized_start=91
-  _globals['_GETREQUEST']._serialized_end=116
-  _globals['_GETRESPONSE']._serialized_start=118
-  _globals['_GETRESPONSE']._serialized_end=146
-  _globals['_DELETEREQUEST']._serialized_start=148
-  _globals['_DELETEREQUEST']._serialized_end=176
-  _globals['_DELETERESPONSE']._serialized_start=178
-  _globals['_DELETERESPONSE']._serialized_end=211
-  _globals['_KEYVALUESTORE']._serialized_start=214
-  _globals['_KEYVALUESTORE']._serialized_end=355
+  _globals['_PUTRESPONSE']._serialized_end=106
+  _globals['_GETREQUEST']._serialized_start=108
+  _globals['_GETREQUEST']._serialized_end=133
+  _globals['_GETRESPONSE']._serialized_start=135
+  _globals['_GETRESPONSE']._serialized_end=191
+  _globals['_DELETEREQUEST']._serialized_start=193
+  _globals['_DELETEREQUEST']._serialized_end=221
+  _globals['_DELETERESPONSE']._serialized_start=223
+  _globals['_DELETERESPONSE']._serialized_end=273
+  _globals['_WATCHREQUEST']._serialized_start=275
+  _globals['_WATCHREQUEST']._serialized_end=302
+  _globals['_WATCHRESPONSE']._serialized_start=304
+  _globals['_WATCHRESPONSE']._serialized_end=349
+  _globals['_ENTRYSTATE']._serialized_start=351
+  _globals['_ENTRYSTATE']._serialized_end=407
+  _globals['_UPDATEEVENT']._serialized_start=409
+  _globals['_UPDATEEVENT']._serialized_end=474
+  _globals['_KEYVALUESTORE']._serialized_start=477
+  _globals['_KEYVALUESTORE']._serialized_end=657
 # @@protoc_insertion_point(module_scope)

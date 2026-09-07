@@ -1,9 +1,6 @@
 syntax = "proto3";
 
 
-// We'll start with a string key and a string value
-// KISS simple
-// Later, we can add more specific typing
 message PutRequest {
   string key = 1;
   string value = 2;
@@ -11,6 +8,7 @@ message PutRequest {
 
 message PutResponse {
   string message = 1;
+  bool success = 2;
 }
 
 message GetRequest {
@@ -19,6 +17,7 @@ message GetRequest {
 
 message GetResponse {
   string value = 1;
+  EntryState state = 2;
 }
 
 message DeleteRequest {
@@ -27,9 +26,36 @@ message DeleteRequest {
 
 message DeleteResponse {
   string message = 1;
+  bool success = 2;
 }
+
+message WatchRequest {
+  string key = 1;
+}
+
+message WatchResponse {
+  UpdateEvent update = 1;
+}
+
+// Represents the state of an Entry (key value pair)
+// within the store
+message EntryState {
+  // Whether or not the entry exists (key in store)
+  bool exists = 1;
+  string key = 2;
+  string value = 3;
+}
+
+// Represents an update of an Entry
+// This is tracked by a change of state
+message UpdateEvent {
+  EntryState old = 1;
+  EntryState new = 2;
+}
+
 service KeyValueStore {
-  rpc PutKey (PutRequest) returns (PutResponse) {}
-  rpc GetKey (GetRequest) returns (GetResponse) {}
-  rpc DeleteKey (DeleteRequest) returns (DeleteResponse) {}
+  rpc PutKey (PutRequest) returns (PutResponse);
+  rpc GetKey (GetRequest) returns (GetResponse); 
+  rpc DeleteKey (DeleteRequest) returns (DeleteResponse); 
+  rpc WatchKey (WatchRequest) returns (stream WatchResponse);
 }
