@@ -9,11 +9,13 @@ The Python implementation of the in-memory key value store.
 Utilizes `protobuf` generated code to store key-value pairs
 """
 
-from collections import deque
 import logging
+from collections import deque
 from collections.abc import Callable
 from concurrent import futures
-from threading import Condition, RLock, Lock
+from threading import Condition, Event, Lock, RLock
+import sys
+import signal
 
 import grpc
 import key_val_pb2
@@ -51,10 +53,11 @@ class UpdatePublisher:
 
 
 class KeyValueService(key_val_pb2_grpc.KeyValueStoreServicer):
-    def __init__(self):
+    def __init__(self, shutdown_event: Event):
         self.store = {}
         self.publisher = UpdatePublisher()
         self._store_lock = RLock()
+        self.shutdown_event = shutdown_event
 
     def state(self, key) -> EntryState:
         """
@@ -145,31 +148,54 @@ class KeyValueService(key_val_pb2_grpc.KeyValueStoreServicer):
         self.publisher.subscribe(key=key, listener=listener)
 
         try:
-            while context.is_active():
+            while context.is_active() and not self.shutdown_event.is_set():
+                events = []
                 with condition:
-                    while not event_queue and context.is_active():
+                    while (
+                        not event_queue
+                        and context.is_active()
+                        and not self.shutdown_event.is_set()
+                    ):
                         # Wait for up to one second
                         condition.wait(timeout=1.0)
 
                     while event_queue:
-                        update = event_queue.popleft()
-                        yield WatchResponse(update=update)
+                        events.append(event_queue.popleft())
+
+                for update in events:
+                    yield WatchResponse(update=update)
 
         except Exception as e:
             print(f"WatchKey stream terminated for key '{key}'.\nCause: {e}")
             context.set_code(grpc.StatusCode.CANCELLED)
-            context.set_details(f"Stream interrupted.\nCause: {str(e)}")
+            context.set_details(f"Stream interrupted.\nCause: {e!s}")
         finally:
             self.publisher.unsubscribe(key=key, listener=listener)
 
 
 def serve():
     port = "50051"
+    shutdown_event = Event()
+
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    key_val_pb2_grpc.add_KeyValueStoreServicer_to_server(KeyValueService(), server)
+
+    key_val_pb2_grpc.add_KeyValueStoreServicer_to_server(
+        KeyValueService(shutdown_event=shutdown_event), server
+    )
     server.add_insecure_port(f"[::]:{port}")
     server.start()
     print(f"Server listening on port {port}")
+
+    def shutdown_handler(signum, frame):
+        shutdown_event.set()
+
+        cleanup = server.stop(grace=10.0)
+        cleanup.wait()
+
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, shutdown_handler)
+    signal.signal(signal.SIGTERM, shutdown_handler)
     server.wait_for_termination()
 
 
