@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package mapreduce;
+
+service CoordinatorService {
+  // Worker RPC's 
+  rpc AssignTask (TaskRequest) returns (TaskAssignment);
+  rpc ReportTaskStatus (TaskStatusReport) returns (TaskStatusAck);
+  rpc Heartbeat (stream HeartbeatPing) returns (stream HeartbeatAck);
+
+}
+
+
+// Worker RPC  messages
+message TaskRequest {
+  string worker_id = 1;
+}
+
+enum TaskType {
+  IDLE = 0;// Default state of the workers
+  MAP = 1;// For Merge Sort this will be sorting k-elements
+  REDUCE = 2;// For Merge Sort this will be the merge operation
+}
+
+message IntegerArray {
+  repeated int32 items = 1;
+}
+
+message TaskAssignment {
+  string task_id = 1;
+  TaskType type = 2;
+  repeated IntegerArray input = 3; // Map -> a single array, Reduce -> 2 sorted arrays
+}
+
+message TaskStatusReport {
+  string task_id = 1;
+  string worker_id = 2; 
+  bool success = 3;
+  repeated int32 result = 4;
+}
+
+message TaskStatusAck {
+  bool acknowledged = 1;
+}
+
+message HeartbeatPing {
+  string worker_id = 1;
+  int64 timestamp = 2;
+}
+
+message HeartbeatAck {
+  bool acknowledged = 1;
+}
+
