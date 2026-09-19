@@ -5,7 +5,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from enum import Enum
+from jobs import TaskState, Task
 from logging import Logger, basicConfig, getLogger
 from queue import Queue
 from threading import Event, Lock
@@ -17,20 +17,6 @@ from coordinator_pb2_grpc import (
     add_CoordinatorServiceServicer_to_server,
 )
 from grpc import RpcError
-
-
-class TaskState(Enum):
-    UNASSIGNED = 0
-    IN_PROGRESS = 1
-    COMPLETED = 2
-
-
-@dataclass
-class Task:
-    task_id: str
-    task_type: TaskType
-    input: list[IntegerArray]
-    state: TaskState = TaskState.UNASSIGNED
 
 
 @dataclass
