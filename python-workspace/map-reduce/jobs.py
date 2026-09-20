@@ -37,9 +37,7 @@ class Job:
     job_result: list[int] | None
     num_items: int  # Crucial to figuring out if job is completed
     phase: JobPhase = JobPhase.MAP
-    map_q: Queue[Task] = field(default_factory=Queue)
     map_results: Queue[list[int]] = field(default_factory=Queue)
-    reduce_q: Queue[Task] = field(default_factory=Queue)
     reduce_buffer: Queue[list[int]] = field(default_factory=Queue)
 
 
@@ -75,6 +73,87 @@ class JobManager:
                 worker_id,
             )
             return task
+
+    def complete_task(self, task_id: str, results: list[int]) -> None:
+        with self.lock:
+            task: Task = self.tasks[task_id]
+            task.results = results
+            task.state = TaskState.COMPLETED
+            job_id = task.job_id
+
+            job: Job = self.jobs[job_id]
+
+            # Push the completed chunk/result into the reduce buffer
+            job.reduce_buffer.put(results)
+
+            # Gather all tasks for this job to check overall progress
+            job_tasks = [t for t in self.tasks.values() if t.job_id == job_id]
+            all_tasks_completed = all(t.state == TaskState.COMPLETED for t in job_tasks)
+
+            if job.phase == JobPhase.MAP:
+                # Check if all MAP tasks are done
+                map_tasks = [t for t in job_tasks if t.task_type == TaskType.MAP]
+                if all(t.state == TaskState.COMPLETED for t in map_tasks):
+                    job.phase = JobPhase.REDUCE
+                    self.logger.info(
+                        "Job id=%s finished MAP phase, transitioning to REDUCE phase",
+                        job_id,
+                    )
+                    self._spawn_reduce_tasks(job)
+                else:
+                    # Still waiting on other map tasks to finish
+                    pass
+
+            elif job.phase == JobPhase.REDUCE:
+                # Check if we are completely done (all tasks finished and only 1 master sorted list remains)
+                if all_tasks_completed and job.reduce_buffer.qsize() == 1:
+                    job.job_result = job.reduce_buffer.get()
+                    job.phase = JobPhase.COMPLETE
+                    self.logger.info(
+                        "Job id=%s completed sorting successfully!", job_id
+                    )
+                    self._save_job_result(job)
+                else:
+                    # Try to spawn more reduce tasks from available buffer pairs
+                    self._spawn_reduce_tasks(job)
+
+    def _spawn_reduce_tasks(self, job: Job):
+        """Packs pairs of sorted lists from the reduce buffer into new REDUCE tasks"""
+        while job.reduce_buffer.qsize() >= 2:
+            try:
+                left = job.reduce_buffer.get_nowait()
+                right = job.reduce_buffer.get_nowait()
+            except Empty:
+                break
+
+            task_id = str(uuid4())
+            task = Task(
+                task_id=task_id,
+                job_id=job.job_id,
+                task_type=TaskType.REDUCE,
+                input=[IntegerArray(items=left), IntegerArray(items=right)],
+                results=None,
+                state=TaskState.UNASSIGNED,
+            )
+
+            self.tasks[task_id] = task
+            self.unassigned_task_q.put(task)
+            self.logger.info(
+                "Created REDUCE task id=%s for job id=%s", task_id, job.job_id
+            )
+
+    def _save_job_result(self, job: Job):
+        """Saves the final sorted integer list to the results directory"""
+        Path(self.result_dir).mkdir(parents=True, exist_ok=True, mode=0o755)
+        out_path = Path(self.result_dir) / f"{job.job_id}_sorted.json"
+        try:
+            with open(out_path, "w") as f:
+                json.dump(job.job_result, f)
+            self.logger.info(
+                "Saved final sorted result for job id=%s to %s", job.job_id, out_path
+            )
+        except Exception as e:
+            self.logger.error("Failed to save result for job id=%s: %s", job.job_id, e)
 
     def revoke_task_assignment(self, task: Task | None) -> None:
         """

@@ -1,5 +1,6 @@
 import logging
 import signal
+import os
 import sys
 import threading
 import time
@@ -16,6 +17,7 @@ from coordinator_pb2 import (
     IntegerArray,
     TaskAssignment,
     TaskRequest,
+    TaskStatusAck,
     TaskType,
 )
 from coordinator_pb2_grpc import (
@@ -57,6 +59,30 @@ class CoordinatorService(CoordinatorServiceServicer):
         self.daemon.start()
 
         self.logger.info("Coordinator Initialized!")
+
+        # TODO: Load the data in the jobs directory using jobs_manager
+        for x in os.listdir("jobs"):
+            self.logger.debug("Found file '%s'", x)
+            self.job_manager.load_job_file(f"jobs/{x}")
+
+    def ReportTaskStatus(self, request, context):
+        worker_id = request.worker_id
+        task_id = request.task_id
+        success = request.success
+        result = list(request.result)
+        task = None
+
+        with self.lock:
+            if worker_id in self.workers:
+                task = self.workers[worker_id].assignment
+                self.workers[worker_id].assignment = None
+
+        if success:
+            self.job_manager.complete_task(task_id=task_id, results=result)
+        else:
+            self.job_manager.revoke_task_assignment(task=task)
+
+        return TaskStatusAck(acknowledged=True)
 
     def AssignTask(self, request: TaskRequest, context):
         worker_id = request.worker_id
@@ -148,10 +174,17 @@ class CoordinatorService(CoordinatorServiceServicer):
 
 
 def serve():
+
     port = "50051"
     shutdown_event = Event()
-
-    server = grpc.server(ThreadPoolExecutor(max_workers=10))
+    max_message_size = 100 * 1024 * 1024  # 100 MB
+    server = grpc.server(
+        ThreadPoolExecutor(max_workers=4),
+        options=[
+            ("grpc.max_send_message_length", max_message_size),
+            ("grpc.max_receive_message_length", max_message_size),
+        ],
+    )
 
     add_CoordinatorServiceServicer_to_server(
         CoordinatorService(shutdown_event=shutdown_event), server

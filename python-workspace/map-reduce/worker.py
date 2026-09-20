@@ -13,6 +13,7 @@ from coordinator_pb2 import (
     TaskAssignment,
     TaskRequest,
     TaskStatusAck,
+    TaskStatusReport,
     TaskType,
 )
 from coordinator_pb2_grpc import CoordinatorServiceStub
@@ -65,7 +66,9 @@ class Worker:
         self.do_log_task_start(task_id, job_id)
         result: list[int] = sorted(input_data)
         response: TaskStatusAck = self.stub.ReportTaskStatus(
-            task_id=task_id, worker_id=self.id, success=True, result=result
+            TaskStatusReport(
+                task_id=task_id, worker_id=self.id, success=True, result=result
+            )
         )
         self.do_log_task_ack(response.acknowledged, task_id, job_id)
 
@@ -73,7 +76,9 @@ class Worker:
         self.do_log_task_start(task_id, job_id)
         result: list[int] = list(merge(left, right))
         response: TaskStatusAck = self.stub.ReportTaskStatus(
-            task_id=task_id, worker_id=self.id, success=True, result=result
+            TaskStatusReport(
+                task_id=task_id, worker_id=self.id, success=True, result=result
+            )
         )
         self.do_log_task_ack(response.acknowledged, task_id, job_id)
 
@@ -158,7 +163,14 @@ class Worker:
 
 
 def run():
-    channel = insecure_channel("localhost:50051")
+    max_message_size = 100 * 1024 * 1024
+    channel = insecure_channel(
+        "localhost:50051",
+        options=[
+            ("grpc.max_send_message_length", max_message_size),
+            ("grpc.max_receive_message_length", max_message_size),
+        ],
+    )
     stub = CoordinatorServiceStub(channel=channel)
     logging.basicConfig(level=logging.DEBUG)
 
