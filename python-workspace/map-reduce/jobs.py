@@ -42,7 +42,20 @@ class Job:
 
 
 class JobManager:
-    def __init__(self, shutdown_event: Event, result_dir: str = "results") -> None:
+    """
+    Manages incoming job and task lifetimes for the `MiniMapReduce`
+    service. This promotes a separation of concerns by drawing a
+    firm boundary between `Job` and `Task` management versus
+    the coordination of task assignemnts to workers.
+    ---
+    """
+
+    def __init__(
+        self,
+        shutdown_event: Event,
+        input_dir: str = "jobs",
+        result_dir: str = "results",
+    ) -> None:
         self.shutdown_event = shutdown_event
         self.logger = getLogger(self.__class__.__name__)
         self.lock: Lock = Lock()  # lock for the job and task objects
@@ -51,7 +64,15 @@ class JobManager:
         self.tasks: dict[str, Task] = {}
         self.jobs: dict[str, Job] = {}
         self.unassigned_task_q: Queue[Task] = Queue()
-        self.result_dir: str = result_dir
+        self.input_dir_path: Path = Path(input_dir)
+        self.result_dir_path: Path = Path(result_dir)
+
+    def _input_poll_daemon(self) -> None:
+        """
+        Polls the input directory for new jobs.
+        This daemon is intended to run on a separate thread
+        """
+        # Create the path to the dir
 
     def get_next_unassigned_task(self, worker_id: str) -> Task | None:
         """
@@ -118,7 +139,9 @@ class JobManager:
                     self._spawn_reduce_tasks(job)
 
     def _spawn_reduce_tasks(self, job: Job):
-        """Packs pairs of sorted lists from the reduce buffer into new REDUCE tasks"""
+        """
+        Packs pairs of sorted lists from the reduce buffer into new REDUCE tasks
+        """
         while job.reduce_buffer.qsize() >= 2:
             try:
                 left = job.reduce_buffer.get_nowait()
@@ -143,9 +166,11 @@ class JobManager:
             )
 
     def _save_job_result(self, job: Job):
-        """Saves the final sorted integer list to the results directory"""
-        Path(self.result_dir).mkdir(parents=True, exist_ok=True, mode=0o755)
-        out_path = Path(self.result_dir) / f"{job.job_id}_sorted.json"
+        """
+        Saves the final sorted integer list to the results directory
+        """
+        self.result_dir_path.mkdir(parents=True, exist_ok=True, mode=0o755)
+        out_path = self.result_dir_path / f"{job.job_id}_sorted.json"
         try:
             with open(out_path, "w") as f:
                 json.dump(job.job_result, f)

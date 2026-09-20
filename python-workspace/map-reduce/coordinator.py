@@ -177,9 +177,12 @@ def serve():
 
     port = "50051"
     shutdown_event = Event()
+    # Alter the max message size for large gRPC messages
+    # Particularly useful for MERGE-ing large amounts of
+    # data
     max_message_size = 100 * 1024 * 1024  # 100 MB
     server = grpc.server(
-        ThreadPoolExecutor(max_workers=4),
+        ThreadPoolExecutor(max_workers=10),
         options=[
             ("grpc.max_send_message_length", max_message_size),
             ("grpc.max_receive_message_length", max_message_size),
