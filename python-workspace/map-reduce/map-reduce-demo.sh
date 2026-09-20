@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 
+# Author: James Daniel Johnson
+# CWID: 20183229
+# Course: CSIS 604 - Distributed Systems
+# Assignment: 2.2 - Mini Map Reduce
+
 # Create the PIDS array to capture process IDs
 PIDS=()
 
 terminate() {
-  # 1. CRITICAL: Unbind the traps immediately so Ctrl+C won't re-trigger this function
+  # Unbind the traps immediately so Ctrl+C doesn't re-trigger this function
   trap - SIGINT SIGTERM
 
   echo -e "\n[!] Cleaning up background processes..."

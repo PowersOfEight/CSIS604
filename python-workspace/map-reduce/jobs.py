@@ -1,3 +1,7 @@
+# Author: James Daniel Johnson
+# CWID: 20183229
+# Course: CSIS 604 - Distributed Systems
+# Assignment: 2.2 - Mini Map Reduce
 import json
 from dataclasses import dataclass, field
 from enum import Enum
@@ -12,12 +16,22 @@ from coordinator_pb2 import IntegerArray, TaskType
 
 
 class TaskState(Enum):
+    """
+    The state of a task as it
+    relates to assignment
+    """
+
     UNASSIGNED = 0
     IN_PROGRESS = 1
     COMPLETED = 2
 
 
 class JobPhase(Enum):
+    """
+    The phase of a job, determined
+    by the collection of tasks
+    """
+
     MAP = 0
     REDUCE = 1
     COMPLETE = 2
@@ -25,6 +39,10 @@ class JobPhase(Enum):
 
 @dataclass
 class Task:
+    """
+    The data-view representation of a Task
+    """
+
     task_id: str
     job_id: str
     task_type: TaskType
@@ -35,6 +53,10 @@ class Task:
 
 @dataclass
 class Job:
+    """
+    The data-view representation of a Job
+    """
+
     job_id: str
     job_result: list[int] | None
     num_items: int  # Crucial to figuring out if job is completed

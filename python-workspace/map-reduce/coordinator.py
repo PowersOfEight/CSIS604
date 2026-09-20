@@ -1,6 +1,9 @@
+# Author: James Daniel Johnson
+# CWID: 20183229
+# Course: CSIS 604 - Distributed Systems
+# Assignment: 2.2 - Mini Map Reduce
 import logging
 import signal
-import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -64,6 +67,9 @@ class CoordinatorService(CoordinatorServiceServicer):
         self.logger.info("Coordinator Initialized!")
 
     def ReportTaskStatus(self, request, context):
+        """
+        Handles finished tasks
+        """
         worker_id = request.worker_id
         task_id = request.task_id
         success = request.success
@@ -83,6 +89,11 @@ class CoordinatorService(CoordinatorServiceServicer):
         return TaskStatusAck(acknowledged=True)
 
     def AssignTask(self, request: TaskRequest, context):
+        """
+        Handles task assignment to workers.  If no tasks
+        currently exist in the queue, advises the worker
+        to idle and check back again
+        """
         worker_id = request.worker_id
         task = self.job_manager.get_next_unassigned_task(worker_id=request.worker_id)
 
@@ -105,6 +116,10 @@ class CoordinatorService(CoordinatorServiceServicer):
         )
 
     def Heartbeat(self, request_iterator, context):
+        """
+        Continuous streaming heartbeat (health monitor)
+        for worker client nodes
+        """
         worker_id = None
         try:
             for ping in request_iterator:
@@ -144,6 +159,11 @@ class CoordinatorService(CoordinatorServiceServicer):
                 )
 
     def _worker_health_daemon(self):
+        """
+        Continuously runs in the background and monitors worker health.
+        Removes stale worker instances and handles adding their assigned
+        tasks back to the queue
+        """
         self.logger.debug("Starting health daemon")
         while not self.shutdown_event.is_set():
             now = time.time()

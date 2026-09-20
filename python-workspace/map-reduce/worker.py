@@ -1,11 +1,15 @@
-from collections.abc import Iterator
-from logging import Logger, getLogger
+# Author: James Daniel Johnson
+# CWID: 20183229
+# Course: CSIS 604 - Distributed Systems
+# Assignment: 2.2 - Mini Map Reduce
 import logging
+from collections.abc import Iterator
+from heapq import merge
+from logging import Logger, getLogger
 from signal import SIGINT, SIGTERM, signal
 from threading import Event, Thread
 from time import sleep, time
 from uuid import uuid4
-from heapq import merge
 
 from coordinator_pb2 import (
     HeartbeatAck,
@@ -21,6 +25,11 @@ from grpc import RpcError, insecure_channel
 
 
 class Worker:
+    """
+    Implementation of a `MiniMapReduce` worker.  For this implementation
+    tasks are exclusively limited to merge-sort
+    """
+
     def __init__(self, shutdown_event: Event, stub: CoordinatorServiceStub):
         self.id = str(uuid4())
         self.shutdown_event = shutdown_event
@@ -39,6 +48,9 @@ class Worker:
         self._task_thread.start()
 
     def do_log_task_ack(self, ack: bool, task_id, job_id):
+        """
+        Helper method for logging acknowledgements from the coordinator
+        """
         if ack:
             self.logger.info(
                 "Coordinator acknowledged worker id=%s completed task id=%s, job id=%s",
@@ -55,6 +67,9 @@ class Worker:
             )
 
     def do_log_task_start(self, task_id: str, job_id: str) -> None:
+        """
+        Helper method to log the beginning of a task
+        """
         self.logger.info(
             "Worker id=%s commencing sorting task id=%s, job id=%s",
             self.id,
@@ -63,6 +78,9 @@ class Worker:
         )
 
     def do_map(self, input_data: list[int], task_id: str, job_id: str) -> None:
+        """
+        Handles a `MAP` task (sort for this implementation)
+        """
         self.do_log_task_start(task_id, job_id)
         result: list[int] = sorted(input_data)
         response: TaskStatusAck = self.stub.ReportTaskStatus(
@@ -73,6 +91,9 @@ class Worker:
         self.do_log_task_ack(response.acknowledged, task_id, job_id)
 
     def do_reduce(self, left: list[int], right: list[int], task_id: str, job_id: str):
+        """
+        Handles a `REDUCE` task (merge for this implementation)
+        """
         self.do_log_task_start(task_id, job_id)
         result: list[int] = list(merge(left, right))
         response: TaskStatusAck = self.stub.ReportTaskStatus(

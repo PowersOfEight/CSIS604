@@ -1,3 +1,7 @@
+# Author: James Daniel Johnson
+# CWID: 20183229
+# Course: CSIS 604 - Distributed Systems
+# Assignment: 2.2 - Mini Map Reduce
 import argparse
 import json
 import random
@@ -8,6 +12,13 @@ from uuid import uuid4
 
 
 class Generator:
+    """
+    Generator of randomized lists of integers meant to be used as
+    input for the `MiniMapReduce` merge-sort implementation.
+    Dumps random integers into a json file in a jobs directory
+    meant to be read by the `JobManager`
+    """
+
     def __init__(
         self,
         output_path: str | Path,
