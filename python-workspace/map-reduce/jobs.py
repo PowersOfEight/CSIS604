@@ -1,12 +1,14 @@
-from dataclasses import dataclass, field
-from logging import getLogger
-from queue import Empty, Queue
-from threading import Event, Lock
-from uuid import uuid4
-from coordinator_pb2 import IntegerArray, TaskType
-from enum import Enum
-from pathlib import Path
 import json
+from dataclasses import dataclass, field
+from enum import Enum
+from json.decoder import JSONDecodeError
+from logging import getLogger
+from pathlib import Path
+from queue import Empty, Queue
+from threading import Event, Lock, Thread
+from uuid import uuid4
+
+from coordinator_pb2 import IntegerArray, TaskType
 
 
 class TaskState(Enum):
@@ -41,6 +43,26 @@ class Job:
     reduce_buffer: Queue[list[int]] = field(default_factory=Queue)
 
 
+def is_valid_integer_list_json_file(file_path: Path) -> bool:
+    """
+    Helper method to check whether the input file is
+    a valid JSON-encoded list file.
+    """
+    try:
+        with file_path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        if not isinstance(data, list):
+            return False
+
+        return all(
+            isinstance(item, int) and not isinstance(item, bool) for item in data
+        )
+
+    except (OSError, JSONDecodeError):
+        return False
+
+
 class JobManager:
     """
     Manages incoming job and task lifetimes for the `MiniMapReduce`
@@ -55,6 +77,8 @@ class JobManager:
         shutdown_event: Event,
         input_dir: str = "jobs",
         result_dir: str = "results",
+        chunk_size: int = 100000,
+        poll_thread_wait: float = 15.0,
     ) -> None:
         self.shutdown_event = shutdown_event
         self.logger = getLogger(self.__class__.__name__)
@@ -66,13 +90,46 @@ class JobManager:
         self.unassigned_task_q: Queue[Task] = Queue()
         self.input_dir_path: Path = Path(input_dir)
         self.result_dir_path: Path = Path(result_dir)
+        self.chunk_size: int = chunk_size
+        self.poll_thread_wait = poll_thread_wait
+        self._input_daemon_thread = Thread(target=self._input_poll_daemon, daemon=True)
+        self._input_daemon_thread.start()
 
     def _input_poll_daemon(self) -> None:
         """
         Polls the input directory for new jobs.
         This daemon is intended to run on a separate thread
         """
-        # Create the path to the dir
+        while not self.shutdown_event.is_set():
+            self.logger.info(
+                "JobManager scanning directory at %s...", self.input_dir_path
+            )
+            # Create the path to the dir
+            self.input_dir_path.mkdir(parents=True, exist_ok=True, mode=0o755)
+
+            # scan the directory
+            for item in self.input_dir_path.glob("*.json"):
+                # exit quickly if a shutdown signal is issued
+                if self.shutdown_event.is_set():
+                    break
+
+                if is_valid_integer_list_json_file(item):
+                    try:
+                        self.load_job_file(item, chunk_size=self.chunk_size)
+                        # Remove job file so that we don't load it again
+                        item.unlink(missing_ok=True)
+                        self.logger.info(
+                            "Successfully removed job file %s after loading", item.name
+                        )
+
+                    except (OSError, JSONDecodeError) as e:
+                        self.logger.error(
+                            "Encountered error trying to load file %s: %s", item, e
+                        )
+                        continue
+
+            if not self.shutdown_event.is_set():
+                self.shutdown_event.wait(self.poll_thread_wait)
 
     def get_next_unassigned_task(self, worker_id: str) -> Task | None:
         """
@@ -196,12 +253,12 @@ class JobManager:
         )
         self.unassigned_task_q.put(task)
 
-    def load_job_file(self, file_path: str, chunk_size=100000):
+    def load_job_file(self, file_path: str | Path, chunk_size=100000):
         """
         Loads a single JSON file of integers, chunks it into MAP tasks, and queues
-        them for worker assignment
+        them for worker assignment. Uses the `stem`ed file_path as the job id
         """
-        path_obj = Path(file_path)
+        path_obj = file_path if isinstance(file_path, Path) else Path(file_path)
         job_id = path_obj.stem
         self.logger.info(
             "Loading job from file %s (assigned job_id=%s)", file_path, job_id
@@ -221,33 +278,37 @@ class JobManager:
         )
 
         with self.lock:
-            job = Job(
-                job_id=job_id, job_result=None, num_items=num_items, phase=JobPhase.MAP
-            )
-            self.jobs[job_id] = job
-
-            map_task_count = 0
-
-            for i in range(0, num_items, chunk_size):
-                chunk = data[i : i + chunk_size]
-                task_id = str(uuid4())
-
-                task = Task(
-                    task_id=task_id,
+            if job_id not in self.jobs:
+                job = Job(
                     job_id=job_id,
-                    task_type=TaskType.MAP,
-                    input=[IntegerArray(items=chunk)],
-                    results=None,
-                    state=TaskState.UNASSIGNED,
+                    job_result=None,
+                    num_items=num_items,
+                    phase=JobPhase.MAP,
                 )
+                self.jobs[job_id] = job
 
-                self.tasks[task_id] = task
+                map_task_count = 0
 
-                self.unassigned_task_q.put(task)
-                map_task_count += 1
+                for i in range(0, num_items, chunk_size):
+                    chunk = data[i : i + chunk_size]
+                    task_id = str(uuid4())
 
-            self.logger.info(
-                "Successfully created and queued %d map tasks for job_id=%s",
-                map_task_count,
-                job_id,
-            )
+                    task = Task(
+                        task_id=task_id,
+                        job_id=job_id,
+                        task_type=TaskType.MAP,
+                        input=[IntegerArray(items=chunk)],
+                        results=None,
+                        state=TaskState.UNASSIGNED,
+                    )
+
+                    self.tasks[task_id] = task
+
+                    self.unassigned_task_q.put(task)
+                    map_task_count += 1
+
+                self.logger.info(
+                    "Successfully created and queued %d map tasks for job_id=%s",
+                    map_task_count,
+                    job_id,
+                )

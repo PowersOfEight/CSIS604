@@ -1,20 +1,16 @@
 import logging
 import signal
-import os
 import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from jobs import JobManager, TaskState, Task, Job
 from logging import Logger, basicConfig, getLogger
-from queue import Queue
 from threading import Event, Lock
 
 import grpc
 from coordinator_pb2 import (
     HeartbeatAck,
-    IntegerArray,
     TaskAssignment,
     TaskRequest,
     TaskStatusAck,
@@ -25,6 +21,7 @@ from coordinator_pb2_grpc import (
     add_CoordinatorServiceServicer_to_server,
 )
 from grpc import RpcError
+from jobs import JobManager, Task
 
 
 @dataclass
@@ -35,6 +32,12 @@ class WorkerInfo:
 
 
 class CoordinatorService(CoordinatorServiceServicer):
+    """
+    Implementation of the gRPC `CoordinatorService`.  Orchestrates task assignment, delegating
+    to worker clients, using its self-contained `JobManager` to continually
+    poll for tasks set into the input directory.
+    """
+
     def __init__(self, shutdown_event: Event, heartbeat_timeout: float = 5.0) -> None:
         # Initialize logging
         self.logger: Logger = getLogger(self.__class__.__name__)
@@ -59,11 +62,6 @@ class CoordinatorService(CoordinatorServiceServicer):
         self.daemon.start()
 
         self.logger.info("Coordinator Initialized!")
-
-        # TODO: Load the data in the jobs directory using jobs_manager
-        for x in os.listdir("jobs"):
-            self.logger.debug("Found file '%s'", x)
-            self.job_manager.load_job_file(f"jobs/{x}")
 
     def ReportTaskStatus(self, request, context):
         worker_id = request.worker_id
@@ -202,8 +200,6 @@ def serve():
 
         cleanup = server.stop(grace=10.0)
         cleanup.wait()
-
-        sys.exit(0)
 
     signal.signal(signal.SIGINT, shutdown_handler)
     signal.signal(signal.SIGTERM, shutdown_handler)
