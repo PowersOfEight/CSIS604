@@ -5,13 +5,19 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from jobs import TaskState, Task
+from jobs import JobManager, TaskState, Task, Job
 from logging import Logger, basicConfig, getLogger
 from queue import Queue
 from threading import Event, Lock
 
 import grpc
-from coordinator_pb2 import HeartbeatAck, IntegerArray, TaskType
+from coordinator_pb2 import (
+    HeartbeatAck,
+    IntegerArray,
+    TaskAssignment,
+    TaskRequest,
+    TaskType,
+)
 from coordinator_pb2_grpc import (
     CoordinatorServiceServicer,
     add_CoordinatorServiceServicer_to_server,
@@ -35,6 +41,7 @@ class CoordinatorService(CoordinatorServiceServicer):
         # Shudown event detection between threads
         self.shutdown_event = shutdown_event
 
+        # This lock is for the workers
         # Mutual exclusion between threads
         self.lock: Lock = Lock()
 
@@ -43,14 +50,35 @@ class CoordinatorService(CoordinatorServiceServicer):
 
         # Internal coordination state
         self.workers: dict[str, WorkerInfo] = {}
-        self.tasks: dict[str, Task] = {}
-        self.unassigned_task_q: Queue[Task] = Queue()
+        self.job_manager = JobManager(shutdown_event=shutdown_event)
 
         # Start the daemon
         self.daemon = threading.Thread(target=self._worker_health_daemon, daemon=True)
         self.daemon.start()
 
         self.logger.info("Coordinator Initialized!")
+
+    def AssignTask(self, request: TaskRequest, context):
+        worker_id = request.worker_id
+        task = self.job_manager.get_next_unassigned_task(worker_id=request.worker_id)
+
+        if task is None:
+            self.logger.debug(
+                "No task found for worker id=%s.  Idling worker", request.worker_id
+            )
+            return TaskAssignment(
+                type=TaskType.IDLE,
+            )
+        with self.lock:
+            if worker_id in self.workers:
+                self.workers[worker_id].assignment = task
+
+        return TaskAssignment(
+            task_id=task.task_id,
+            job_id=task.job_id,
+            type=task.task_type,
+            input=task.input,
+        )
 
     def Heartbeat(self, request_iterator, context):
         worker_id = None
@@ -80,6 +108,8 @@ class CoordinatorService(CoordinatorServiceServicer):
                     now,
                     ping.timestamp,
                 )
+                if self.shutdown_event.is_set():
+                    break
 
         except RpcError as e:
             self.logger.error("Error in heartbeat detection: %s", e)
@@ -96,6 +126,8 @@ class CoordinatorService(CoordinatorServiceServicer):
 
             with self.lock:
                 for worker_id, info in list(self.workers.items()):
+                    if self.shutdown_event.is_set():
+                        break
                     if info.is_active and (
                         now - info.last_seen > self.heartbeat_timeout
                     ):
@@ -106,15 +138,7 @@ class CoordinatorService(CoordinatorServiceServicer):
                         )
                         info.is_active = False
                         if info.assignment is not None:
-                            task: Task | None = self.tasks.get(
-                                info.assignment.task_id, None
-                            )
-                            if (
-                                task is not None
-                                and task.state is not TaskState.COMPLETED
-                            ):
-                                task.state = TaskState.UNASSIGNED
-                                self.unassigned_task_q.put(task)
+                            self.job_manager.revoke_task_assignment(info.assignment)
                             info.assignment = None
                         self.workers.pop(worker_id, None)
                         self.logger.warning("Worker id=%s removed", worker_id)

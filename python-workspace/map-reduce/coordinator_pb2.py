@@ -24,29 +24,29 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11\x63oordinator.proto\x12\tmapreduce\" \n\x0bTaskRequest\x12\x11\n\tworker_id\x18\x01 \x01(\t\"\x1d\n\x0cIntegerArray\x12\r\n\x05items\x18\x01 \x03(\x05\"l\n\x0eTaskAssignment\x12\x0f\n\x07task_id\x18\x01 \x01(\t\x12!\n\x04type\x18\x02 \x01(\x0e\x32\x13.mapreduce.TaskType\x12&\n\x05input\x18\x03 \x03(\x0b\x32\x17.mapreduce.IntegerArray\"W\n\x10TaskStatusReport\x12\x0f\n\x07task_id\x18\x01 \x01(\t\x12\x11\n\tworker_id\x18\x02 \x01(\t\x12\x0f\n\x07success\x18\x03 \x01(\x08\x12\x0e\n\x06result\x18\x04 \x03(\x05\"%\n\rTaskStatusAck\x12\x14\n\x0c\x61\x63knowledged\x18\x01 \x01(\x08\"5\n\rHeartbeatPing\x12\x11\n\tworker_id\x18\x01 \x01(\t\x12\x11\n\ttimestamp\x18\x02 \x01(\x03\"$\n\x0cHeartbeatAck\x12\x14\n\x0c\x61\x63knowledged\x18\x01 \x01(\x08*)\n\x08TaskType\x12\x08\n\x04IDLE\x10\x00\x12\x07\n\x03MAP\x10\x01\x12\n\n\x06REDUCE\x10\x02\x32\xe4\x01\n\x12\x43oordinatorService\x12?\n\nAssignTask\x12\x16.mapreduce.TaskRequest\x1a\x19.mapreduce.TaskAssignment\x12I\n\x10ReportTaskStatus\x12\x1b.mapreduce.TaskStatusReport\x1a\x18.mapreduce.TaskStatusAck\x12\x42\n\tHeartbeat\x12\x18.mapreduce.HeartbeatPing\x1a\x17.mapreduce.HeartbeatAck(\x01\x30\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11\x63oordinator.proto\x12\tmapreduce\" \n\x0bTaskRequest\x12\x11\n\tworker_id\x18\x01 \x01(\t\"\x1d\n\x0cIntegerArray\x12\r\n\x05items\x18\x01 \x03(\x05\"|\n\x0eTaskAssignment\x12\x0f\n\x07task_id\x18\x01 \x01(\t\x12\x0e\n\x06job_id\x18\x02 \x01(\t\x12!\n\x04type\x18\x03 \x01(\x0e\x32\x13.mapreduce.TaskType\x12&\n\x05input\x18\x04 \x03(\x0b\x32\x17.mapreduce.IntegerArray\"W\n\x10TaskStatusReport\x12\x0f\n\x07task_id\x18\x01 \x01(\t\x12\x11\n\tworker_id\x18\x02 \x01(\t\x12\x0f\n\x07success\x18\x03 \x01(\x08\x12\x0e\n\x06result\x18\x04 \x03(\x05\"%\n\rTaskStatusAck\x12\x14\n\x0c\x61\x63knowledged\x18\x01 \x01(\x08\"5\n\rHeartbeatPing\x12\x11\n\tworker_id\x18\x01 \x01(\t\x12\x11\n\ttimestamp\x18\x02 \x01(\x03\"$\n\x0cHeartbeatAck\x12\x14\n\x0c\x61\x63knowledged\x18\x01 \x01(\x08*)\n\x08TaskType\x12\x08\n\x04IDLE\x10\x00\x12\x07\n\x03MAP\x10\x01\x12\n\n\x06REDUCE\x10\x02\x32\xe4\x01\n\x12\x43oordinatorService\x12?\n\nAssignTask\x12\x16.mapreduce.TaskRequest\x1a\x19.mapreduce.TaskAssignment\x12I\n\x10ReportTaskStatus\x12\x1b.mapreduce.TaskStatusReport\x1a\x18.mapreduce.TaskStatusAck\x12\x42\n\tHeartbeat\x12\x18.mapreduce.HeartbeatPing\x1a\x17.mapreduce.HeartbeatAck(\x01\x30\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'coordinator_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_TASKTYPE']._serialized_start=428
-  _globals['_TASKTYPE']._serialized_end=469
+  _globals['_TASKTYPE']._serialized_start=444
+  _globals['_TASKTYPE']._serialized_end=485
   _globals['_TASKREQUEST']._serialized_start=32
   _globals['_TASKREQUEST']._serialized_end=64
   _globals['_INTEGERARRAY']._serialized_start=66
   _globals['_INTEGERARRAY']._serialized_end=95
   _globals['_TASKASSIGNMENT']._serialized_start=97
-  _globals['_TASKASSIGNMENT']._serialized_end=205
-  _globals['_TASKSTATUSREPORT']._serialized_start=207
-  _globals['_TASKSTATUSREPORT']._serialized_end=294
-  _globals['_TASKSTATUSACK']._serialized_start=296
-  _globals['_TASKSTATUSACK']._serialized_end=333
-  _globals['_HEARTBEATPING']._serialized_start=335
-  _globals['_HEARTBEATPING']._serialized_end=388
-  _globals['_HEARTBEATACK']._serialized_start=390
-  _globals['_HEARTBEATACK']._serialized_end=426
-  _globals['_COORDINATORSERVICE']._serialized_start=472
-  _globals['_COORDINATORSERVICE']._serialized_end=700
+  _globals['_TASKASSIGNMENT']._serialized_end=221
+  _globals['_TASKSTATUSREPORT']._serialized_start=223
+  _globals['_TASKSTATUSREPORT']._serialized_end=310
+  _globals['_TASKSTATUSACK']._serialized_start=312
+  _globals['_TASKSTATUSACK']._serialized_end=349
+  _globals['_HEARTBEATPING']._serialized_start=351
+  _globals['_HEARTBEATPING']._serialized_end=404
+  _globals['_HEARTBEATACK']._serialized_start=406
+  _globals['_HEARTBEATACK']._serialized_end=442
+  _globals['_COORDINATORSERVICE']._serialized_start=488
+  _globals['_COORDINATORSERVICE']._serialized_end=716
 # @@protoc_insertion_point(module_scope)

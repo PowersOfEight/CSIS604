@@ -28,8 +28,9 @@ message IntegerArray {
 
 message TaskAssignment {
   string task_id = 1;
-  TaskType type = 2;
-  repeated IntegerArray input = 3; // Map -> a single array, Reduce -> 2 sorted arrays
+  string job_id = 2;
+  TaskType type = 3;
+  repeated IntegerArray input = 4; // Map -> a single array, Reduce -> 2 sorted arrays
 }
 
 message TaskStatusReport {

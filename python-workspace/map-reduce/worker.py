@@ -26,7 +26,6 @@ class Worker:
         self.stub = stub
         self.logger: Logger = getLogger(self.__class__.__name__)
         self._heartbeat_thread = Thread(target=self._heartbeat_daemon, daemon=True)
-        # TODO: create a thread for the task daemon
 
     def start(self):
         """
@@ -54,7 +53,7 @@ class Worker:
                     pass
                 else:
                     # for now, just sleep and run again
-                    sleep(1.0)
+                    self.shutdown_event.wait(1.0)
                     continue
 
             except RpcError as e:

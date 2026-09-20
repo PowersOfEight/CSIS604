@@ -29,14 +29,16 @@ class IntegerArray(_message.Message):
     def __init__(self, items: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class TaskAssignment(_message.Message):
-    __slots__ = ("task_id", "type", "input")
+    __slots__ = ("task_id", "job_id", "type", "input")
     TASK_ID_FIELD_NUMBER: _ClassVar[int]
+    JOB_ID_FIELD_NUMBER: _ClassVar[int]
     TYPE_FIELD_NUMBER: _ClassVar[int]
     INPUT_FIELD_NUMBER: _ClassVar[int]
     task_id: str
+    job_id: str
     type: TaskType
     input: _containers.RepeatedCompositeFieldContainer[IntegerArray]
-    def __init__(self, task_id: _Optional[str] = ..., type: _Optional[_Union[TaskType, str]] = ..., input: _Optional[_Iterable[_Union[IntegerArray, _Mapping]]] = ...) -> None: ...
+    def __init__(self, task_id: _Optional[str] = ..., job_id: _Optional[str] = ..., type: _Optional[_Union[TaskType, str]] = ..., input: _Optional[_Iterable[_Union[IntegerArray, _Mapping]]] = ...) -> None: ...
 
 class TaskStatusReport(_message.Message):
     __slots__ = ("task_id", "worker_id", "success", "result")
