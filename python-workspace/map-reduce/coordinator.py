@@ -161,6 +161,7 @@ def serve():
     print(f"Server listening on port {port}")
 
     def shutdown_handler(signum, frame):
+        print("\nCommencing graceful shutdown...")
         shutdown_event.set()
 
         cleanup = server.stop(grace=10.0)
