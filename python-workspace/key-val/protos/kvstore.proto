@@ -1,3 +1,7 @@
+// Author: James Daniel Johnson
+// CWID: 20183229
+// Course: CSIS 604 - Distributed Systems
+// Assignment: 2.1 - Key-Value Store
 syntax = "proto3";
 
 

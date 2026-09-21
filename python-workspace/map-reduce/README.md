@@ -28,7 +28,7 @@
   <tr><th>Author</th><td>James Daniel Johnson</td></tr>
   <tr><th>CWID</th><td>20183229</td></tr>
   <tr><th>Course</th><td>CSIS 604 - Distributed Systems</td></tr>
-  <tr><th>Assignment</th><td>2.2 - <code>MiniMapReduce</code></td></tr>
+  <tr><th>Assignment</th><td>1.2 - <code>MiniMapReduce</code></td></tr>
 </table>
 
 ---

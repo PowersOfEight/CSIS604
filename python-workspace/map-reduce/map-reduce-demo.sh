@@ -3,7 +3,7 @@
 # Author: James Daniel Johnson
 # CWID: 20183229
 # Course: CSIS 604 - Distributed Systems
-# Assignment: 2.2 - Mini Map Reduce
+# Assignment: 1.2 - Mini Map Reduce
 
 # Create the PIDS array to capture process IDs
 PIDS=()
