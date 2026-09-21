@@ -1,5 +1,21 @@
 # Distributed Key-Value Store
 
+<!--toc:start-->
+
+- [Distributed Key-Value Store](#distributed-key-value-store)
+  - [Attribution](#attribution)
+  - [Summary](#summary)
+  - [Quickstart - A Demonstration of Asynchronous Operations](#quickstart-a-demonstration-of-asynchronous-operations)
+  - [Components](#components)
+    - [Virtual Environment](#virtual-environment)
+    - [kvstore.proto](#kvstoreproto)
+    - [`UpdatePublisher`](#updatepublisher)
+    - [KeyValueService](#keyvalueservice)
+      - [`WatchKey` RPC Implementation](#watchkey-rpc-implementation)
+    - [`KeyValueClient`](#keyvalueclient)
+
+<!--toc:end-->
+
 ---
 
 ## Attribution
