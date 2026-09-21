@@ -383,7 +383,7 @@ when an event has been published.
 ### `KeyValueClient`
 
 The client operates as a thin command-line client, and as such uses python's
-`argparse.ArgumentParser` to provide the user with commands, paramaters, and
+`argparse.ArgumentParser` to provide the user with commands, parameters, and
 a `--help` menu.
 
 ```bash
