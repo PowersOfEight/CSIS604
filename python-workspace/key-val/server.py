@@ -9,13 +9,13 @@ The Python implementation of the in-memory key value store.
 Utilizes `protobuf` generated code to store key-value pairs
 """
 
-import logging
+import signal
+import sys
 from collections import deque
 from collections.abc import Callable
 from concurrent import futures
+from logging import DEBUG, Logger, basicConfig, getLogger
 from threading import Condition, Event, Lock, RLock
-import sys
-import signal
 
 import grpc
 import key_val_pb2
@@ -24,40 +24,81 @@ from key_val_pb2 import EntryState, UpdateEvent, WatchResponse
 
 
 class UpdatePublisher:
+    """
+    Publisher component used to publish
+    event updates to listening threads
+    """
+
     def __init__(self) -> None:
         self.subscriptions: dict[str, list[Callable[[UpdateEvent], None]]] = {}
         self._lock: Lock = Lock()
+        self.logger: Logger = getLogger(self.__class__.__name__)
 
     def subscribe(self, key: str, listener: Callable[[UpdateEvent], None]):
+        """
+        Registers a listener with the publisher
+        """
+        self.logger.info(
+            "Subscribing listener id=%d to listen for updates to key=%s",
+            id(listener),
+            key,
+        )
         with self._lock:
             if key not in self.subscriptions:
+                self.logger.debug("Adding key=%s to subscriptions", key)
                 self.subscriptions[key] = []
             self.subscriptions[key].append(listener)
 
     def unsubscribe(self, key: str, listener: Callable[[UpdateEvent], None]):
+        """
+        Removes a listener from the publisher
+        """
+        self.logger.info(
+            "Attempting to unsubscribe listener id=%d from watching key=%s",
+            id(listener),
+            key,
+        )
         with self._lock:
             if key in self.subscriptions:
                 try:
                     self.subscriptions[key].remove(listener)
                     if len(self.subscriptions[key]) == 0:
+                        self.logger.debug(
+                            "No more subscrptions for key=%s, removing key from watchlist",
+                            key,
+                        )
                         self.subscriptions.pop(key)
-                except ValueError:
-                    pass
+                except ValueError as e:
+                    self.logger.error(
+                        "Error removing listener id=%d from subscription to key=%s: %s",
+                        id(listener),
+                        key,
+                        e,
+                    )
+            else:
+                self.logger.warning(
+                    "No subscriptions found for key=%s, could not unsubscribe", key
+                )
 
     def publish(self, key: str, update: UpdateEvent):
+        """
+        Publishes UpdateEvent to listeners
+        """
+        self.logger.info("Publishing update for key=%s", key)
         with self._lock:
             listeners = list(self.subscriptions.get(key, []))
-
         for listener in listeners:
+            self.logger.debug("Activating listener id=%d with update", id(listener))
             listener(update)
 
 
 class KeyValueService(key_val_pb2_grpc.KeyValueStoreServicer):
     def __init__(self, shutdown_event: Event):
-        self.store = {}
-        self.publisher = UpdatePublisher()
-        self._store_lock = RLock()
-        self.shutdown_event = shutdown_event
+        self.store: dict = {}
+        self.publisher: UpdatePublisher = UpdatePublisher()
+        self._store_lock: RLock = RLock()
+        self.shutdown_event: Event = shutdown_event
+        self.logger: Logger = getLogger(self.__class__.__name__)
 
     def state(self, key) -> EntryState:
         """
@@ -78,6 +119,7 @@ class KeyValueService(key_val_pb2_grpc.KeyValueStoreServicer):
         prev_state = None
         curr_state = None
 
+        self.logger.info("Putting entry {%s:%s}", key, value)
         # Obtain key prior to mutating state
         with self._store_lock:
             prev_state = self.state(key)
@@ -87,6 +129,7 @@ class KeyValueService(key_val_pb2_grpc.KeyValueStoreServicer):
 
         # Publish if update occurred
         if is_update:
+            self.logger.debug("Publishing update to key %s", key)
             self.publisher.publish(
                 key=key,
                 update=UpdateEvent(
@@ -113,9 +156,11 @@ class KeyValueService(key_val_pb2_grpc.KeyValueStoreServicer):
         curr_state = None
         is_update = False
 
+        self.logger.info("Deleting entry with key %s", key)
         with self._store_lock:
             prev_state = self.state(key)
             if prev_state != None and prev_state.exists:
+                self.logger.debug("Found entry with key %s, deleting...")
                 self.store.pop(key, None)
                 curr_state = self.state(key)
                 is_update = True
@@ -124,11 +169,15 @@ class KeyValueService(key_val_pb2_grpc.KeyValueStoreServicer):
                     success=True,
                 )
             else:
+                self.logger.warning("Could not find key %s in the store to delete", key)
                 response = key_val_pb2.DeleteResponse(
                     message=f"Key {key} not found in the store.",
                     success=False,
                 )
         if is_update:
+            self.logger.debug(
+                "Deletion of key %s successful, publishing update...", key
+            )
             self.publisher.publish(
                 key=key, update=UpdateEvent(old=prev_state, new=curr_state)
             )
@@ -141,6 +190,7 @@ class KeyValueService(key_val_pb2_grpc.KeyValueStoreServicer):
         event_queue = deque()
 
         def listener(update: UpdateEvent):
+            self.logger.debug("Recieved update event, appending to queue")
             with condition:
                 event_queue.append(update)
                 condition.notify_all()
@@ -162,14 +212,26 @@ class KeyValueService(key_val_pb2_grpc.KeyValueStoreServicer):
                     while event_queue:
                         events.append(event_queue.popleft())
 
+                if len(events) > 0:
+                    self.logger.debug(
+                        "Found %d updates in event queue, sending updates...",
+                        len(events),
+                    )
                 for update in events:
                     yield WatchResponse(update=update)
 
-        except Exception as e:
-            print(f"WatchKey stream terminated for key '{key}'.\nCause: {e}")
+        except grpc.RpcError as e:
+            self.logger.error(
+                "WatchKey stream terminated for key '%s'.\nCause: %s", key, e
+            )
             context.set_code(grpc.StatusCode.CANCELLED)
             context.set_details(f"Stream interrupted.\nCause: {e!s}")
         finally:
+            self.logger.info(
+                "Unsubscribing listener id=%d from watching key %s in WatchKey",
+                id(listener),
+                key,
+            )
             self.publisher.unsubscribe(key=key, listener=listener)
 
 
@@ -200,5 +262,5 @@ def serve():
 
 
 if __name__ == "__main__":
-    logging.basicConfig()
+    basicConfig(level=DEBUG)
     serve()

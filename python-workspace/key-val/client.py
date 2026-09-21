@@ -1,19 +1,20 @@
-"""
-
-[TODO:description]
-"""
-
+# Author: James Daniel Johnson
+# CWID: 20183229                         # Course: CSIS 604 - Distributed Systems
+# Assignment: 2.1 - Key-Value Store
 import argparse
-from collections.abc import Iterator
 import logging
+from collections.abc import Iterator
+
 from grpc import RpcError, StatusCode, insecure_channel
 from key_val_pb2 import (
+    DeleteRequest,
+    DeleteResponse,
+    EntryState,
+    GetRequest,
     GetResponse,
     PutRequest,
-    GetRequest,
-    DeleteResponse,
-    DeleteRequest,
     PutResponse,
+    UpdateEvent,
     WatchRequest,
     WatchResponse,
 )
@@ -21,15 +22,27 @@ from key_val_pb2_grpc import KeyValueStoreStub
 
 
 class KeyValueClient:
+    """
+    The client for the key-value store.
+    """
+
     def __init__(self):
         self.channel = insecure_channel("localhost:50051")
         self.stub = KeyValueStoreStub(self.channel)
 
     def doPut(self, key, value) -> PutResponse:
+        """
+        Puts a key-value entry into the map.
+        Note that this is idempotent
+        """
         request = PutRequest(key=key, value=value)
         return self.stub.PutKey(request)
 
     def doGet(self, key) -> GetResponse:
+        """
+        Retrieves a value from the store
+        by the given key
+        """
         request = GetRequest(key=key)
         return self.stub.GetKey(request=request)
 
@@ -38,7 +51,10 @@ class KeyValueClient:
         return self.stub.DeleteKey(request=request)
 
     def doWatch(self, key: str, timeout: float | None) -> Iterator[WatchResponse]:
-        deadline = timeout if timeout is not None else 30.0
+        """
+        Watches an entry for updates based on the key
+        """
+        deadline = timeout
         request = WatchRequest(key=key)
         return self.stub.WatchKey(request=request, timeout=deadline)
 
@@ -47,7 +63,6 @@ class KeyValueClient:
 
 
 def run():
-    watch_timeout = 30.0  # Default watch period is 30 seconds
     client = KeyValueClient()
     parser = argparse.ArgumentParser(description="Key-Value Store Client CLI")
 
@@ -76,8 +91,8 @@ def run():
     watch_parser.add_argument(
         "--timeout",
         type=float,
-        default=watch_timeout,
-        help=f"The timeout for the watcher. Default wait time is {watch_timeout} seconds",
+        default=None,
+        help="The timeout for the watcher in seconds",
     )
 
     args = parser.parse_args()
@@ -88,21 +103,23 @@ def run():
             print(f"{response.message}")
         case "get":
             response = client.doGet(key=args.key)
-            if response.value == "":
-                print("[null]")
+            if response is None or response.value is None or response.value == "":
+                print(f"No value associated with key={args.key}")
             else:
                 print(f'"{response.value}"')
         case "delete":
             response = client.doDelete(key=args.key)
             print(f"{response.message}")
         case "watch":
-            timeout = args.timeout if args.timeout is not None else watch_timeout
+            timeout = args.timeout if args.timeout is not None else None
             try:
-                stream = client.doWatch(key=args.key, timeout=timeout)
+                stream: Iterator[WatchResponse] = client.doWatch(
+                    key=args.key, timeout=timeout
+                )
                 for response in stream:
-                    update = response.update
-                    old = update.old
-                    new = update.new
+                    update: UpdateEvent = response.update
+                    old: EntryState = update.old
+                    new: EntryState = update.new
                     if old.exists and not new.exists:  # delete
                         print(
                             f"Deleted entry '{old.key}' from the store.\nUpdate: {old.key}:{old.value}->None"
@@ -117,7 +134,7 @@ def run():
                         )
             except RpcError as e:
                 if e.code() == StatusCode.DEADLINE_EXCEEDED:
-                    print(f"Watcher stopped because the timeout has been reached")
+                    print("Watcher stopped because the timeout has been reached")
                 else:
                     print(f"Stream error: {e.details()}")
 
