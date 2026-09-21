@@ -57,42 +57,42 @@ def run() -> None:
         description="Generator CLI for producing lists of integers for sorting"
     )
     parser.add_argument(
-        "--output",
         "-o",
+        "--output",
         type=str,
         default=None,
         help="Output path or directory. Defaults to jobs/<generated-uuid>.json",
     )
     parser.add_argument(
-        "--max",
         "-M",
+        "--max",
         type=int,
         default=1000000,
         help="The maximum integer value. (Default=%(default)s)",
     )
     parser.add_argument(
-        "--min",
         "-m",
+        "--min",
         type=int,
         default=-1000000,
         help="The minimum integer value. (Default=%(default)s)",
     )
     parser.add_argument(
-        "--length",
         "-n",
+        "--length",
         type=int,
         default=1000000,
         help="The number of values to generate. (Default=%(default)s)",
     )
     parser.add_argument(
-        "--daemon",
         "-d",
+        "--daemon",
         action="store_true",
         help="Run as a daemon loop, dropping a new file periodically.",
     )
     parser.add_argument(
-        "--interval",
         "-i",
+        "--interval",
         type=int,
         default=30,
         help="Interval in seconds between generation loops when running as a daemon. (Default=%(default)s)",

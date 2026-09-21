@@ -39,11 +39,15 @@ $PYTHON_EXEC generator.py --daemon --interval 5 &
 PIDS+=($!)
 echo "Started generator with PID=${PIDS[-1]}" # '${PIDS[-1]}' fetches the last added item
 
+sleep 5
+
 # Start the coordinator service
 echo "Starting coordinator service..."
 $PYTHON_EXEC coordinator.py &
 PIDS+=($!)
 echo "Started coordinator service with PID=${PIDS[-1]}"
+
+sleep 5
 
 # Start worker processes
 echo "Starting 5 worker processes..."

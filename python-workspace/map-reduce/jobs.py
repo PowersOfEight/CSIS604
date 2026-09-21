@@ -100,7 +100,7 @@ class JobManager:
         input_dir: str = "jobs",
         result_dir: str = "results",
         chunk_size: int = 100000,
-        poll_thread_wait: float = 15.0,
+        poll_thread_wait: float = 5.0,
     ) -> None:
         self.shutdown_event = shutdown_event
         self.logger = getLogger(self.__class__.__name__)
