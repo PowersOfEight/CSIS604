@@ -13,6 +13,7 @@
     - [Create the `Dockerfile` Image Blueprint](#create-the-dockerfile-image-blueprint)
     - [Build An Image Tagged `dist-node:v1`](#build-an-image-tagged-dist-nodev1)
     - [Run Two Distinct Node Instances](#run-two-distinct-node-instances)
+    - [Verification](#verification)
   - [Discussion](#discussion)
     - [Prompt](#prompt)
     - [Answer](#answer)
@@ -216,8 +217,17 @@ Place your finger on the fingerprint reader
 $ sudo docker run -d --name node1 -p 8081:5000 -e NODE_ID="worker-node-alpha" dist-node:v1
 Place your finger on the fingerprint reader
 9da97eca5de2d31268f7a9ac1cd14f556d7f3ad77c8e31da41001111225af500
-sudo docker run -d --name node2 -p 8082:5000 -e NODE_ID="worker-node-beta" dist-node:v1
+$ sudo docker run -d --name node2 -p 8082:5000 -e NODE_ID="worker-node-beta" dist-node:v1
 eee3364b5a4cf68922b066c9bde6d01205106dc4c1265afb6eb964a57b426d29
+```
+
+### Verification
+
+```bash
+$ sudo docker ps
+CONTAINER ID   IMAGE          COMMAND             CREATED       STATUS         PORTS                                         NAMES
+9da97eca5de2   dist-node:v1   "python ./app.py"   2 hours ago   Up 5 seconds   0.0.0.0:8081->5000/tcp, [::]:8081->5000/tcp   node1
+eee3364b5a4c   dist-node:v1   "python ./app.py"   2 hours ago   Up 5 seconds   0.0.0.0:8082->5000/tcp, [::]:8082->5000/tcp   node2
 $ curl http://localhost:808{1,2}/{,health}
 {"hostname":"9da97eca5de2","node_id":"worker-node-alpha","status":"online"}
 {"status":"healthy"}
