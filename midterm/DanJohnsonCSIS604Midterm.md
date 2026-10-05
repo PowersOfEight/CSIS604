@@ -5,9 +5,11 @@ author: "Dan Johnson"
 documentClass: article
 geometry: margin=1in
 linestretch: 2
+indent: true
 header-includes:
   - \usepackage{setspace}
   - \usepackage{etoolbox}
+  - \usepackage{indentfirst}
   - \AtBeginEnvironment{quote}{\singlespacing}
 bibliography: references.bib
 csl: https://raw.githubusercontent.com/citation-style-language/styles/master/chicago-notes-bibliography.csl
