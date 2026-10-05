@@ -103,3 +103,146 @@ author = {Wazir Zada Khan and Ejaz Ahmed and Saqib Hakak and Ibrar Yaqoob and Ar
 keywords = {Mobile edge computing, Edge computing, Cloudlets, Fog computing, Micro clouds, Cloud computing},
 abstract = {In recent years, the Edge computing paradigm has gained considerable popularity in academic and industrial circles. It serves as a key enabler for many future technologies like 5G, Internet of Things (IoT), augmented reality and vehicle-to-vehicle communications by connecting cloud computing facilities and services to the end users. The Edge computing paradigm provides low latency, mobility, and location awareness support to delay-sensitive applications. Significant research has been carried out in the area of Edge computing, which is reviewed in terms of latest developments such as Mobile Edge Computing, Cloudlet, and Fog computing, resulting in providing researchers with more insight into the existing solutions and future applications. This article is meant to serve as a comprehensive survey of recent advancements in Edge computing highlighting the core applications. It also discusses the importance of Edge computing in real life scenarios where response time constitutes the fundamental requirement for many applications. The article concludes with identifying the requirements and discuss open research challenges in Edge computing.}
 }
+
+@inproceedings{containersAndVirtualMachinesAtScale2016,
+author = {Sharma, Prateek and Chaufournier, Lucas and Shenoy, Prashant and Tay, Y. C.},
+title = {Containers and Virtual Machines at Scale: A Comparative Study},
+year = {2016},
+isbn = {9781450343008},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2988336.2988337},
+doi = {10.1145/2988336.2988337},
+abstract = {Virtualization is used in data center and cloud environments to decouple applications from the hardware they run on. Hardware virtualization and operating system level virtualization are two prominent technologies that enable this. Containers, which use OS virtualization, have recently surged in interest and deployment. In this paper, we study the differences between the two virtualization technologies. We compare containers and virtual machines in large data center environments along the dimensions of performance, manageability and software development.We evaluate the performance differences caused by the different virtualization technologies in data center environments where multiple applications are running on the same servers (multi-tenancy). Our results show that co-located applications can cause performance interference, and the degree of interference is higher in the case of containers for certain types of workloads. We also evaluate differences in the management frameworks which control deployment and orchestration of containers and VMs. We show how the different capabilities exposed by the two virtualization technologies can affect the management and development of applications. Lastly, we evaluate novel approaches which combine hardware and OS virtualization.},
+booktitle = {Proceedings of the 17th International Middleware Conference},
+articleno = {1},
+numpages = {13},
+location = {Trento, Italy},
+series = {Middleware '16}
+}
+
+
+@article{historyOfVirtualMachinesAndContainers2020,
+   title={The Ideal Versus the Real: Revisiting the History of Virtual Machines and Containers},
+   volume={53},
+   ISSN={1557-7341},
+   url={http://dx.doi.org/10.1145/3365199},
+   DOI={10.1145/3365199},
+   number={1},
+   journal={ACM Computing Surveys},
+   publisher={Association for Computing Machinery (ACM)},
+   author={Randal, Allison},
+   year={2020},
+   month=Feb, pages={1–31} }
+
+
+@article{virtualMachineMigration2018,
+  author={Zhang, Fei and Liu, Guangming and Fu, Xiaoming and Yahyapour, Ramin},
+  journal={IEEE Communications Surveys & Tutorials}, 
+  title={A Survey on Virtual Machine Migration: Challenges, Techniques, and Open Issues}, 
+  year={2018},
+  volume={20},
+  number={2},
+  pages={1206-1243},
+  keywords={Cloud computing;Servers;Hardware;Virtual machining;Electronic mail;Taxonomy;Cloud computing;data center;virtual machine migration;pre-copy;post-copy;hybrid-copy;network connection;user mobility;performance analysis},
+  doi={10.1109/COMST.2018.2794881}}
+  
+@book{distributedSystems2017, place={Wroc±aw}, title={Distributed systems}, publisher={Amazon Fulfillment Poland Sp. z o.o}, author={Steen, Martinus Richardus van and Tanenbaum, Andrew S.}, year={2017}} 
+
+@article{manyFacesOfPubSub,
+author = {Eugster, Patrick Th. and Felber, Pascal A. and Guerraoui, Rachid and Kermarrec, Anne-Marie},
+title = {The many faces of publish/subscribe},
+year = {2003},
+issue_date = {June 2003},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {35},
+number = {2},
+issn = {0360-0300},
+url = {https://doi.org/10.1145/857076.857078},
+doi = {10.1145/857076.857078},
+abstract = {Well adapted to the loosely coupled nature of distributed interaction in large-scale applications, the publish/subscribe communication paradigm has recently received increasing attention. With systems based on the publish/subscribe interaction scheme, subscribers register their interest in an event, or a pattern of events, and are subsequently asynchronously notified of events generated by publishers. Many variants of the paradigm have recently been proposed, each variant being specifically adapted to some given application or network model. This paper factors out the common denominator underlying these variants: full decoupling of the communicating entities in time, space, and synchronization. We use these three decoupling dimensions to better identify commonalities and divergences with traditional interaction paradigms. The many variations on the theme of publish/subscribe are classified and synthesized. In particular, their respective benefits and shortcomings are discussed both in terms of interfaces and implementations.},
+journal = {ACM Comput. Surv.},
+month = jun,
+pages = {114–131},
+numpages = {18},
+keywords = {publish/subscribe, interaction, Distribution}
+}
+
+@article{securityForPubSub,
+author = {Uzunov, Anton V.},
+title = {A survey of security solutions for distributed publish/subscribe systems},
+year = {2016},
+issue_date = {August 2016},
+publisher = {Elsevier Advanced Technology Publications},
+address = {GBR},
+volume = {61},
+number = {C},
+issn = {0167-4048},
+url = {https://doi.org/10.1016/j.cose.2016.04.008},
+doi = {10.1016/j.cose.2016.04.008},
+abstract = {Over the last two decades, the need for loosely-coupled, asynchronous communications and distributed component interaction has made the publish/subscribe pattern increasingly popular in a variety of contexts. Despite their popularity, systems realizing this pattern are inherently susceptible to a wide variety of security threats, both of a general and specific nature. An increasing awareness of the importance of countering these threats has instigated a number of relevant proposals in the literature in the form of various types of security solutions. Having a broad knowledge of such security solutions is a prerequisite not only to proposing new solutions, but also to further advancing, re-using and adapting existing solutions to future publish/subscribe architectures. This paper seeks to contribute to the satisfaction of the latter prerequisite by presenting a comprehensive state-of-the-art survey of security solutions for distributed publish/subscribe systems, focusing on solutions taking the form of concrete security architectures. The solutions are reviewed "horizontally" from an architectural viewpoint, allowing their constituent parts to be seen in their original contexts. These "horizontal" reviews are augmented with brief analyses of constituent security patterns and pertinent threats addressed, thus providing a contextualized "vertical" dimension to each solution individually. In this way the paper provides a distinct perspective on a rapidly growing area of research, while complementing and consolidating the existing body of work concerned with surveying publish/subscribe security in general.},
+journal = {Comput. Secur.},
+month = aug,
+pages = {94–129},
+numpages = {36},
+keywords = {Distributed event-based systems, Publish/subscribe, Security architecture, Software architecture, Software security, Survey}
+}
+
+
+@misc{funda_about_2026,
+  author       = {{Funda Engineering}},
+  title        = {About {Funda}},
+  howpublished = {\url{https://blog.funda.nl/about/}},
+  year         = {2026},
+  note         = {Accessed: 2026-10-04}
+}
+
+@misc{consensusageblockchains,
+      title={Consensus in the Age of Blockchains}, 
+      author={Shehar Bano and Alberto Sonnino and Mustafa Al-Bassam and Sarah Azouvi and Patrick McCorry and Sarah Meiklejohn and George Danezis},
+      year={2017},
+      eprint={1711.03936},
+      archivePrefix={arXiv},
+      primaryClass={cs.CR},
+      url={https://arxiv.org/abs/1711.03936}, 
+}
+
+@misc{theBlockchainTrilemma,
+  author = {{Coinbase}},
+  title  = {What is the blockchain trilemma?},
+  howpublished = {\url{https://www.coinbase.com/learn/crypto-glossary/what-is-the-blockchain-trilemma}},
+  year         = {2026},
+  note         = {Accessed: 2026-10-04}
+}
+
+@misc{gitHashing,
+  author = {{Git}},
+  title  = {Hash Function Transition},
+  howpublished = {\url{https://git-scm.com/docs/hash-function-transition}},
+  year         = {2026},
+  note         = {Accessed: 2026-10-04}
+}
+
+@InProceedings{consensusTaxonomyBlockchain,
+author="Garay, Juan and Kiayias, Aggelos",
+editor="Jarecki, Stanislaw",
+title="SoK: A Consensus Taxonomy in the Blockchain Era",
+booktitle="Topics in Cryptology -- CT-RSA 2020",
+year="2020",
+publisher="Springer International Publishing",
+address="Cham",
+pages="284--318",
+abstract="Consensus is arguably one of the most fundamental problems in distributed computing, playing also an important role in the area of cryptographic protocols as the enabler of a secure broadcast functionality. While the problem has a long and rich history and has been analyzed from many different perspectives, recently, with the advent of blockchain protocols like Bitcoin, it has experienced renewed interest from a much wider community of researchers and has seen its application expand to various novel settings.",
+isbn="978-3-030-40186-3",
+doi="10.1007/978-3-030-40186-3_13"
+}
+
+
+@misc{vansteen2023blockchain,
+  author       = {Maarten van Steen and Andrew S. Tanenbaum},
+  title        = {Distributed Systems (4th Edition) Lecture Slides: Chapter 6 -- Blockchain},
+  howpublished = {\url{https://www.distributed-systems.net/my-data/edu/06%20Blockchain.pdf}},
+  year         = {2023},
+  note         = {Accessed: 2026-10-04}
+}

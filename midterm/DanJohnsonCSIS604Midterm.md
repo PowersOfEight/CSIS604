@@ -26,6 +26,13 @@ csl: https://raw.githubusercontent.com/citation-style-language/styles/master/chi
     - [Recommendation](#recommendation-1)
   - [3. Virtual Machines Versus Container Technology](#3-virtual-machines-versus-container-technology)
     - [Prompt](#prompt-2)
+    - [Recommendation](#recommendation-2)
+  - [4. Scalability of publish-subscribe systems](#4-scalability-of-publish-subscribe-systems)
+    - [Prompt](#prompt-3)
+    - [Recommendation](#recommendation-3)
+  - [5. Scalability of blockchain systems](#5-scalability-of-blockchain-systems)
+    - [Prompt](#prompt-4)
+    - [Recommendation](#recommendation-4)
   - [References](#references)
 
 <!--toc:end-->
@@ -147,6 +154,93 @@ low-cost integratin model that directly mitigates enterprise deployment risk.<sp
 > containers. You suspect that in the end, they may need to use both containers and virtual
 > machines, side-by-side. Providing the proper requirements for whatever solution they decide
 > on, is what you will be offering.
+
+### Recommendation
+
+The primary distinction between a virtual machine and a container is that a virtual machine _mimics the underlying hardware and operating system of a physical machine on a host machine_ whereas a container is fundamentally _an isolated (containerized) process running on the host machine which virtualizes only the operating system_.<span hidden="true">[@containersAndVirtualMachinesAtScale2016]</span> This distinction is
+important when choosing which technology to base a particular application or infrastructure on because the containerized processes "do not run their own OS kernels, but instead rely on the underlying kernel for OS services."<span hidden="true">[@containersAndVirtualMachinesAtScale2016, p 2]</span> Due to this, containerization applications are a non-starter if the firm is trying to host a Windows application (which will rely on the Windows kernel) on a Debian or Unix host, at least without an additional layer of virtualization.
+
+As for the perceived performance gains that containerization touts over full hardware virtualization,
+"containers have a reputation for substantially better performance than virtual machines, however that reputation may not be deserved."<span hidden="true">[@historyOfVirtualMachinesAndContainers2020, p 14]</span>
+It appears that these performance gains are dependent on the type of _work_ the underlying application may
+be doing, as containers _do_ have a performance edge _when the applications are I/O bound_<span hidden="true">[@historyOfVirtualMachinesAndContainers2020, p 14]</span><span hidden="true">[@containersAndVirtualMachinesAtScale2016]</span>. This is likely due to the I/O bound applications use of a _system call_, but notably when we can
+minimize these system calls (e.g. for applications that remain in user space), the performance of VMs
+approaches that of the host machine.<span hidden="true">[@distributedSystems2017, pp 120-121]</span>
+
+From a security standpoint, the fact that a container must make several privileged system calls
+to create its isolated environment in the first place means that containers do have a larger vulnerability
+surface than virtual machines.<span hidden="true">[@historyOfVirtualMachinesAndContainers2020, p 14] [@containersAndVirtualMachinesAtScale2016, p 8]</span> To mitigate this multi-tenant security risk while still capitalizing on agile application scaling, the firm should offer a hybrid, side-by-side architecture that runs multiple-process container runtimes nested within hardware-isolated virtual machine silos.<span hidden="true">[@containersAndVirtualMachinesAtScale2016, p 10]</span> This nested configuration delivers the robust, multi-OS security boundaries of hypervisors to satisfy both Windows and Unix clients, while
+concurrently providing low-overhead packaging and rapid cloning of containers within trusted, isolated, and secure boundaries.<span hidden="true">[@containersAndVirtualMachinesAtScale2016, p 10]</span>
+
+<div hidden="true">
+\pagebreak
+</div>
+
+## 4. Scalability of publish-subscribe systems
+
+### Prompt
+
+> As with so many hypes, lots of folks have started to ride the wave of publish-subscribe
+> systems without really understanding what is going on. Fortunately, your expert team does
+> understand what is in that wave. You have been hired by a company (called REPS) that wants
+> to set up a nationwide competitor to funda.nl for selling and renting a range of real estate.
+> Their unique selling point is that a customer can subscribe to new property that matches
+> their wishes such that within only a few seconds they will receive a notification when that
+> property comes available.
+>
+> You immediately understand that you're dealing with a content-based publish-subscribe
+> system, but with the current turnover in the housing market, you also understand that
+> scaling may be an issue. Moreover, missing out on a notification may lead to claims by
+> customers.
+>
+> To this end, you decide to dig further into the matter and identify the tradeoffs REPS needs
+> to consider. You ask yourself whether a simpler topic-based or channel-based pub-sub
+> system can suffice, or perhaps a combination of the two. In any case, you will need to make
+> clear to REPS what they are facing up to. To make matters worse, REPS has decided that it
+> would prefer to also guarantee that matches remain anonymous, allowing them to make use
+> of existing cloud-based services without the need to fully trust those services. If time allows,
+> you will also advise on this additional requirement, knowing that it is not going to help
+> keeping matters simple.
+
+### Recommendation
+
+While content-based publish-subscribe systems offer maximum expressiveness by evaluating multiple attribute filters against a wide range of event contents, implementing this paradigm for a nationwide `funda.nl` competitor introduces a severe matching bottleneck. If the subscriber base $s$ and property listings $p$ grow linearly, a naive linear search requires $\Theta(s \cdot p)$ comparisons runtime overhead.<span hidden="true">[@manyFacesOfPubSub, pp 8-10]</span> To put this in perspective, [funda](https://blog.funda.nl/about/) carries about 4.6 million users<span hidden="true">[@funda_about_2026]</span>, so if we assume that $s \leq p$ and REPS is competing for the same pool of users and properties, we have that there is a potential for more than 16 trillion comparisons for such a system with a deadline of only a few seconds. Pivoting to topics has severe trade-offs as well, as either the subscriber (client) would need to filter out irrelevant topics leading to an inefficient use of bandwidth, or the topics would need to be split out into a multitude of subtopics recursively which has the unfortunate side-effect of producing redundant events<span hidden="true">[@manyFacesOfPubSub, p 10]</span> and can also introduce scaling issues.
+
+To resolve this algorithmic bottleneck, the company should abandon exact, centralized evaluations in favor of a distributed routing topology backed by probabilistic pre-filtering layers.<span hidden="true">[@securityForPubSub, p 120]</span> By deploying an array of brokers that utilize localized subscription containment posets or Bloom-filter arrays, the system can quickly discard non-matching event spaces before executing expensive downstream predicate checks.<span hidden="true">[@securityForPubSub, p 120]</span> Alternatively, transitioning the compute model to a probabilistic routing vector or a two-way recommendation engine allows the platform to sacrifice absolute completeness within a small, quantifiable error bound to drastically minimize real-time matching latency.<span hidden="true">[@manyFacesOfPubSub, p 10]</span> This architectural compromise shifts the system away from fragile, synchronous evaluation bottlenecks and moves it toward a highly parallelizable framework capable of executing wide-area content delivery.
+
+The constraint to preserve subscriber anonymity across untrusted cloud providers adds intense security complexity, introducing severe vulnerabilities to overlay flooding and subscription-leak attacks.<span hidden="true">[@securityForPubSub, p 120]</span> To satisfy this criteria without full cloud trust, the architecture must implement a secure proxy anonymizer engine that intercepts user queries and cloaks them within an aggregate anonymity set of obfuscated and false subscriptions.<span hidden="true">[@securityForPubSub, p 119]</span> While this prevents third-party hosts from inferring exact consumer interest, it intentionally inflates the routing table volume and introduces a massive risk of bad actors launching malicious oversubscription attacks to starve system resources. Therefore, guaranteeing true identity and subscription secrecy requires the startup to implement strict role-based access control (RBAC) and out-of-band cryptographic token verification at edge boundaries to keep malicious actors from hijacking or poisoning the distributed overlay routing state.<span hidden="true">[@securityForPubSub, p 111]</span>
+
+<div hidden="true">
+\pagebreak
+</div>
+
+## 5. Scalability of blockchain systems
+
+### Prompt
+
+> Blockchain technology has become a much debated topic, often for very different reasons.
+> Part of the popularity comes from the belief that blockchains can operate without the need
+> for a trusted third party (such as a bank) while offering scalability. When diving deeper into
+> the technicalities, there are serious problems. One specific problem that may eventually turn
+> out to be too difficult to solve, is that the combination of full decentralization (i.e., no trusted
+> third party), high transaction processing capabilities, scalability in the number of participants,
+> and still attaining global consensus on the commitment of transactions is practically
+> impossible to realize. One could argue that this impossibility renders blockchains practically
+> useless.
+>
+> Imagine the situation that the CEO of a software company is considering to tender for
+> developing a general-purpose blockchain platform that can act as a middleware solution for a
+> range of potential applications. Aware of the controversies around blockchains, they ask your
+> expert team to give a well-founded advice on whether or not they should considering
+> developing such a platform.
+
+### Recommendation
+
+The CEO is strongly advised to cancel any development of a general-purpose blockchain platform, as the underlying architecture is bound by a fundamental distributed systems conflict known as the [Blockchain Trilemma](https://www.coinbase.com/learn/crypto-glossary/what-is-the-blockchain-trilemma).<span hidden="true">[@theBlockchainTrilemma]</span> Achieving global transaction finality in a permission-less network requires all participating nodes to execute computationally expensive consensus mechanisms to resolve deterministic race conditions without a trusted intermediary.<span hidden="true">[@consensusTaxonomyBlockchain]</span> When employing a race-based protocol, if the protocol's block-generation timeouts are configured too low, the overlay encounters severe network partitioning and availability issues;<span hidden="true">[@vansteen2023blockchain]</span> conversely, long timeouts induce unacceptable transaction processing latencies that fail enterprise middleware standards. Because a general-purpose platform cannot predict the varying latency, scale, and consistency constraints of arbitrary target applications, building a universal substrate forces a structural compromise which inherently limits scalability.
+
+This scalability bottleneck is driven by the strict voting and validation thresholds required to maintain a state machine replication ledger in an unauthenticated, peer-to-peer setting.<span hidden="true">[@consensusageblockchains, p 3]</span> To survive Byzantine faults where malicious nodes can actively spoof identities, inject malformed blocks, or poison routing entries, classical consensus algorithms demand an overwhelming $3t + 1$ validator quorum to tolerate only $t$ active failures.<span hidden="true">[@vansteen2023blockchain]</span> Forcing a wide-area network of un-vetted participants to execute these all-to-all messaging steps creates an $O(n^2)$ communication complexity overhead that quickly degrades transaction throughput as the node population expands.<span hidden="true">[@consensusageblockchains, p 12]</span> Attempting to substitute this absolute ground-truth model with optimistic, multi-version branch structures - similar to [Git](https://git-scm.com/docs/hash-function-transition) repositories<span hidden="true">[@gitHashing]</span> - decouples the runtime race conditions but fundamentally destroys the ledger's core purpose of maintaining a single, universally synchronized global state.
+
+Instead of wasting critical development resources on a general-purpose infrastructure layer, the software company should pivot its strategy toward offering modular, domain-specific Byzantine fault-tolerant (BFT) sharding architectures.<span hidden="true">[@consensusageblockchains, p 12]</span> By grouping verified client sets into closed, permissioned committees, the middleware can execute highly optimized, parallelized intra-committee atomic commits to achieve sub-second finality at bare-metal processing speeds. This sharded design safely bypasses the infinite data accumulation and power-intensive bottlenecks of open blockchains while preserving strong consistency and cryptographic verifiability for the specific enterprise applications that require it. Transitioning to a permissioned, multiple-committee ecosystem delivers immediate architectural utility to target industries without drowning the firm in the insurmountable technical debt of open-group identity tracking.
 
 <div hidden="true">
 \pagebreak
