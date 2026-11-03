@@ -7,6 +7,7 @@ geometry: margin=1in
 linestretch: 2
 indent: true
 header-includes:
+  - \usepackage{amsmath}
   - \usepackage{setspace}
   - \usepackage{etoolbox}
   - \usepackage{indentfirst}
@@ -20,7 +21,7 @@ csl: https://raw.githubusercontent.com/citation-style-language/styles/master/chi
 - [The Byzantine Generals Problem and Byzantine Fault Tolerance](#the-byzantine-generals-problem-and-byzantine-fault-tolerance)
   - [Introduction](#introduction)
   - [Analysis of $OM(2)$ for $n=7,m=2$](#analysis-of-om2-for-n7m2)
-    - [Case 1: The Commander Is Loyal<div id="case-1-the-commander-is-loyal"></div>](#case-1-the-commander-is-loyaldiv-idcase-1-the-commander-is-loyaldiv)
+    - [Case 1: The Commander Is Loyal](#case-1-the-commander-is-loyal)
       - [Top-Level Execution of $OM(2)$](#top-level-execution-of-om2)
       - [Recursive Level: $OM(1)$](#recursive-level-om1)
       - [Base Case Level: $OM(0)$ and Upward Voting](#base-case-level-om0-and-upward-voting)
@@ -29,7 +30,8 @@ csl: https://raw.githubusercontent.com/citation-style-language/styles/master/chi
       - [Top-Level Execution of $OM(2)$](#top-level-execution-of-om2-1)
       - [Recursive Level: $OM(1)$](#recursive-level-om1-1)
       - [Base Case Level: $OM(0)$ and Upward Voting](#base-case-level-om0-and-upward-voting-1)
-      - [Top-Level Vector Aggregation and Decision ($OM(2)$)](#top-level-vector-aggregation-and-decision-om2-1)
+      - [Top-Level Vector Aggregation and Decision ($OM(2)$) <span hidden="true">\newline</span>](#top-level-vector-aggregation-and-decision-om2-span-hiddentruenewlinespan)
+  - [Conclusion](#conclusion)
 - [References](#references)
 
 <!--toc:end-->
@@ -38,7 +40,7 @@ csl: https://raw.githubusercontent.com/citation-style-language/styles/master/chi
 
 ## Introduction
 
-The Byzantine Generals Problem is a classic thought experiment involving the fault tolerance of distributed systems. The fundamental actors in the thought experiment are the _generals_, commanders of the armies that are laying siege to an enemy city. These generals must come to consensus through some means to decide whether to attack or retreat which is subject to the passing of messages. Let $G$ be the set of generals, then for $n=|G|$ we suppose that there exists some $T \subseteq G$ of _traitors_, with $m = |T|$. According to the seminal work on the problem, an algorithm that robustly provides a solution to this problem (known as Byzantine Fault Tolerance) must involve $n \geq 3m + 1$ generals.<span hidden="true">[@Lamport1982Byzantine]</span> Lamport et al. constructed such an algorithm, known as _Oral Message_ for up to $m$ traitors, denoted $OM(m)$. While previous demonstrations have shown that $OM(1)$ for $n=4$ provides BFT, subsequent demonstrations have been left to the reader. Thus, a demonstration that $OM(2)$ provides BFT for $n=7$ is provided below.
+The Byzantine Generals Problem is a classic thought experiment involving the fault tolerance of distributed systems. The fundamental actors in the thought experiment are _generals_ commanding armies laying siege to an enemy city. These generals must come to consensus through some means to decide whether to attack or retreat which is subject to the passing of messages. Let $G$ be the set of generals, then for $n=|G|$ suppose that there exists some $T \subseteq G$ of _traitors_, with $m = |T|$. According to the seminal work on the problem, an algorithm that robustly provides a solution to this problem (known as Byzantine Fault Tolerance or BFT) must involve $n \geq 3m + 1$ generals.<span hidden="true">[@Lamport1982Byzantine]</span> Lamport et al. constructed such an algorithm, known as _Oral Message_ for up to $m$ traitors, denoted $OM(m)$. While previous demonstrations have shown that $OM(1)$ for $n=4$ provides BFT, subsequent demonstrations have been left to the reader. Thus, a demonstration that $OM(2)$ provides BFT for $n=7$ is provided below.
 
 ## Analysis of $OM(2)$ for $n=7,m=2$
 
@@ -48,9 +50,18 @@ To illustrate the mechanics of $OM(2)$ in a system where $|G|=7$ and $|T|=2$, tw
 
 2. The commander is a traitor ($C \in T$)
 
-### Case 1: The Commander Is Loyal<div id="case-1-the-commander-is-loyal"></div>
+<span hidden>\noindent</span>
+The algorithm must satisfy two key _interactive consistency_ criteria in order to provide BFT<span hidden="true">[@Lamport1982Byzantine]</span>.
 
-Suppose that the commanding general $C$ is loyal, and broadcasts the initial order $v \in \{ \text{ATTACK}, \text{RETREAT} \}$ to each of the remaining lieutenants in $G \setminus \{C\}$. There are $6$ lieutenants denoted $L_i$ for $1 \leq i \leq 6$ and precisely two of them are traitors. Fix $k,h \in [6]$ with $k \neq h$ such that $T = \{L_k, L_h\}$.
+1. **$IC1$**: _All loyal lieutenants obey the same order_<span hidden="true">[@Lamport1982Byzantine]</span>.
+2. $IC2$: _If the commanding general is loyal, then every loyal lieutenant obeys the order he sends_<span hidden="true">[@Lamport1982Byzantine]</span>.
+
+<span hidden>\noindent</span>
+Notably, $IC2$ is only applicable _if the commanding general is loyal_, and also $IC1$ naturally follows from $IC2$<span hidden="true">[@Lamport1982Byzantine]</span>.
+
+### Case 1: The Commander Is Loyal
+
+Suppose that the commanding general $C$ is loyal, and broadcasts the initial order $v \in \{ \text{ATTACK}, \text{RETREAT} \}$ to each of the remaining lieutenants in $G - \{C\}$. There are $6$ lieutenants denoted $L_i$ for $1 \leq i \leq 6$ and precisely two of them are traitors. Fix $k,h \in [6]$ with $k \neq h$ such that $T = \{L_k, L_h\}$.
 
 #### Top-Level Execution of $OM(2)$
 
@@ -77,7 +88,7 @@ $$
   v_{i,j} = \text{majority}(v_{i,1}^{(0)}, \ldots, v_{i,5}^{(0)})
 $$
 
-For any loyal sub-commander we note that there are only $2$ traitors, with $5 - 2 = 3$, thus $\text{majority}$ will _always_ produce $v$ for $v_{i,j}$.
+For any loyal sub-commander note that there are only $2$ traitors, with $5 - 2 = 3$, thus $\text{majority}$ will _always_ produce $v$ for $v_{i,j}$.
 
 #### Top-Level Vector Aggregation and Decision ($OM(2)$)
 
@@ -107,9 +118,7 @@ Suppose that the commanding general $C$ is a traitor ($C \in T$). Because the to
 
 #### Recursive Level: $OM(1)$
 
-For each sub-instance initiated by a lieutenant $L_i$:
-
-1. **Sub-delegation Phase:** Sub-commander $L_i$ sends their value $v_i$ to the other $5$ lieutenants.
+1. **Sub-delegation Phase:** Each sub-commander $L_i$ sends their value $v_i$ to the other $5$ lieutenants.
 
    - If $L_i$ is **loyal** ($i \ne k$), $L_i$ faithfully transmits $v_i$ to all peers.
    - If $L_i$ is **traitorous** ($i = k$), $L_k$ may send conflicting messages to different peers or fail to transmit.
@@ -123,9 +132,9 @@ For each sub-instance initiated by a lieutenant $L_i$:
 2. **Voting at Rung $OM(1)$:** For a given sub-commander $L_i$, each loyal lieutenant $L_j$ ($j \ne k$) aggregates the values received via $OM(0)$ across their peers and applies the local majority function:
    $$v_{i, j} = \text{majority}(v_{i, 1}^{(0)}, \dots, v_{i, 5}^{(0)})$$
    - For any **loyal** sub-commander $L_i$ ($i \ne k$), all lieutenants in that sub-instance (except $L_k$) are loyal. Since $5 - 1 = 4$ nodes faithfully relay $v_i$, $\text{majority}$ yields $v_{i, j} = v_i$ for every loyal $L_j$.
-   - For the **traitorous** sub-commander $L_k$, although $L_k$ attempts to send conflicting values, the recursive cross-examination via $OM(0)$ ensures consistency. By Lemma 1, because at least $4$ of the $5$ lieutenants in that sub-instance are loyal, every loyal lieutenant computes the **exact same majority value** $v_{k, j} = v_k^*$.
+   - For the **traitorous** sub-commander $L_k$, although $L_k$ attempts to send conflicting values, the recursive cross-examination via $OM(0)$ ensures consistency. By Lemma 1, because at least $4$ of the $5$ lieutenants in that sub-instance are loyal, every loyal lieutenant computes the **exact same majority value** $v_{k, j} = v_k^*$<span hidden="true">[@Lamport1982Byzantine]</span>.
 
-#### Top-Level Vector Aggregation and Decision ($OM(2)$)
+#### Top-Level Vector Aggregation and Decision ($OM(2)$) <span hidden="true">\newline</span>
 
 At the top level $OM(2)$, each loyal lieutenant $L_j$ ($j \ne k$) constructs their final vector of length $6$ using the resolved $OM(1)$ majority outputs:
 $$\vec{v}_j = [v_{1, j}, v_{2, j}, \dots, v_{6, j}]$$
@@ -137,6 +146,10 @@ Evaluating the top-level majority function over these identical vectors yields:
 $$\text{majority}(\vec{v}_j) = \text{majority}(\vec{v}_i) \quad \forall i, j \notin T$$
 
 Thus, despite the commander's treason and initial message diversification, all loyal lieutenants decide upon the exact same final plan of action, satisfying Interactive Consistency condition **IC1**.
+
+## Conclusion
+
+Due to the recursive nature of the $OM(m)$ algorithm, BFT can be guaranteed for up to $m$ traitors, but this is not without costs. In fact, to sustain this level of fault tolerance, $(n-1)(n-2)\cdots (n - m - 1)$ messages may be involved<span hidden="true">[@Lamport1982Byzantine]</span>. This scaling limitation may prove to be too much for many applications, "However, when extremely high reliability is required, such assumptions cannot be made, and the full expense of a Byzantine Generals solution is required."<span hidden="true">[@Lamport1982Byzantine]</span>
 
 <span hidden="true">\newpage</span>
 
