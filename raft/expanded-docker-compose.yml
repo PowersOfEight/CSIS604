@@ -1,0 +1,354 @@
+networks:
+  raft-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.99.0.0/24
+
+services:
+  #Consul nodes
+  #Service names are consul{N}-node so they do NOT collide with
+  #the "consul{N}" network alias on the matching Toxiproxy sidecar.
+  #Each node advertises the Toxiproxy sidecar IP and retry-joins
+  #through sidecar IPs. Raft TCP traverses Toxiproxy;
+  #Serf UDP traverses the accompanying socat relays.
+  #This is needed because docker compose uses the continer name or service name
+  #for DNS resolution, so if the Consul node advertised its own IP,
+  #the other nodes would bypass the proxy and connect directly to it.
+
+  #Consul UI client — NOT a Raft voter; only provides the web UI and API gateway
+  consul-ui:
+    image: hashicorp/consul:1.15
+    container_name: consul-ui
+    networks:
+      raft-net:
+        ipv4_address: 10.99.0.20
+    ports:
+      - "8500:8500"
+      - "8600:8600/tcp"
+      - "8600:8600/udp"
+    command:
+      - "agent"
+      - "-node=consul-ui"
+      - "-bind=0.0.0.0"
+      - "-client=0.0.0.0"
+      - "-ui"
+      - "-datacenter=dc1"
+      - "-data-dir=/tmp/consul"
+      - "-retry-join=10.99.0.10"
+      - "-retry-join=10.99.0.11"
+      - "-retry-join=10.99.0.12"
+      - "-retry-join=10.99.0.13"
+      - "-retry-join=10.99.0.14"
+    depends_on:
+      - consul1-node
+      - consul2-node
+      - consul3-node
+      - consul4-node
+      - consul5-node
+
+  consul1-node:
+    image: hashicorp/consul:1.15
+    container_name: consul1-node
+    networks:
+      raft-net:
+        ipv4_address: 10.99.0.2
+    command:
+      - "agent"
+      - "-server"
+      - "-bootstrap-expect=5"
+      - "-node=consul1"
+      - "-bind=0.0.0.0"
+      - "-client=0.0.0.0"
+      - "-advertise=10.99.0.10"
+      - "-datacenter=dc1"
+      - "-data-dir=/tmp/consul"
+      - "-retry-join=10.99.0.11"
+      - "-retry-join=10.99.0.12"
+      - "-retry-join=10.99.0.13"
+      - "-retry-join=10.99.0.14"
+
+  consul2-node:
+    image: hashicorp/consul:1.15
+    container_name: consul2-node
+    networks:
+      raft-net:
+        ipv4_address: 10.99.0.3
+    command:
+      - "agent"
+      - "-server"
+      - "-bootstrap-expect=5"
+      - "-node=consul2"
+      - "-bind=0.0.0.0"
+      - "-client=0.0.0.0"
+      - "-advertise=10.99.0.11"
+      - "-datacenter=dc1"
+      - "-data-dir=/tmp/consul"
+      - "-retry-join=10.99.0.10"
+      - "-retry-join=10.99.0.12"
+      - "-retry-join=10.99.0.13"
+      - "-retry-join=10.99.0.14"
+
+  consul3-node:
+    image: hashicorp/consul:1.15
+    container_name: consul3-node
+    networks:
+      raft-net:
+        ipv4_address: 10.99.0.4
+    command:
+      - "agent"
+      - "-server"
+      - "-bootstrap-expect=5"
+      - "-node=consul3"
+      - "-bind=0.0.0.0"
+      - "-client=0.0.0.0"
+      - "-advertise=10.99.0.12"
+      - "-datacenter=dc1"
+      - "-data-dir=/tmp/consul"
+      - "-retry-join=10.99.0.10"
+      - "-retry-join=10.99.0.11"
+      - "-retry-join=10.99.0.13"
+      - "-retry-join=10.99.0.14"
+
+  consul4-node:
+    image: hashicorp/consul:1.15
+    container_name: consul4-node
+    networks:
+      raft-net:
+        ipv4_address: 10.99.0.5
+    command:
+      - "agent"
+      - "-server"
+      - "-bootstrap-expect=5"
+      - "-node=consul4"
+      - "-bind=0.0.0.0"
+      - "-client=0.0.0.0"
+      - "-advertise=10.99.0.13"
+      - "-datacenter=dc1"
+      - "-data-dir=/tmp/consul"
+      - "-retry-join=10.99.0.10"
+      - "-retry-join=10.99.0.11"
+      - "-retry-join=10.99.0.12"
+      - "-retry-join=10.99.0.14"
+
+  consul5-node:
+    image: hashicorp/consul:1.15
+    container_name: consul5-node
+    networks:
+      raft-net:
+        ipv4_address: 10.99.0.6
+    command:
+      - "agent"
+      - "-server"
+      - "-bootstrap-expect=5"
+      - "-node=consul5"
+      - "-bind=0.0.0.0"
+      - "-client=0.0.0.0"
+      - "-advertise=10.99.0.14"
+      - "-datacenter=dc1"
+      - "-data-dir=/tmp/consul"
+      - "-retry-join=10.99.0.10"
+      - "-retry-join=10.99.0.11"
+      - "-retry-join=10.99.0.12"
+      - "-retry-join=10.99.0.13"
+
+  #Toxiproxy sidecars (dedicated container running beside each Consul node)
+  #Each sidecar gets a network alias matching the Consul node name
+  #(consul1, consul2, consul3) so that DNS resolution within the
+  #Docker network routes to the proxy, not the real Consul container.
+  #Proxy configs are defined as Compose configs (below) and mounted
+  #directly into each container — no external files needed.
+
+  toxiproxy1:
+    image: ghcr.io/shopify/toxiproxy:2.5.0
+    container_name: toxiproxy1
+    networks:
+      raft-net:
+        ipv4_address: 10.99.0.10
+        aliases:
+          - consul1
+    ports:
+      - "8474:8474"
+    configs:
+      - source: toxiproxy1_config
+        target: /config/toxiproxy.json
+    command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
+    depends_on:
+      - consul1-node
+
+  toxiproxy2:
+    image: ghcr.io/shopify/toxiproxy:2.5.0
+    container_name: toxiproxy2
+    networks:
+      raft-net:
+        ipv4_address: 10.99.0.11
+        aliases:
+          - consul2
+    ports:
+      - "8475:8474"
+    configs:
+      - source: toxiproxy2_config
+        target: /config/toxiproxy.json
+    command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
+    depends_on:
+      - consul2-node
+
+  toxiproxy3:
+    image: ghcr.io/shopify/toxiproxy:2.5.0
+    container_name: toxiproxy3
+    networks:
+      raft-net:
+        ipv4_address: 10.99.0.12
+        aliases:
+          - consul3
+    ports:
+      - "8476:8474"
+    configs:
+      - source: toxiproxy3_config
+        target: /config/toxiproxy.json
+    command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
+    depends_on:
+      - consul3-node
+
+
+  toxiproxy4:
+    image: ghcr.io/shopify/toxiproxy:2.5.0
+    container_name: toxiproxy4
+    networks:
+      raft-net:
+        ipv4_address: 10.99.0.13
+        aliases:
+          - consul4
+    ports:
+      - "8477:8474"
+    configs:
+      - source: toxiproxy4_config
+        target: /config/toxiproxy.json
+    command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
+    depends_on:
+      - consul4-node
+
+  toxiproxy5:
+    image: ghcr.io/shopify/toxiproxy:2.5.0
+    container_name: toxiproxy5
+    networks:
+      raft-net:
+        ipv4_address: 10.99.0.14
+        aliases:
+          - consul5
+    ports:
+      - "8478:8474"
+    configs:
+      - source: toxiproxy5_config
+        target: /config/toxiproxy.json
+    command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
+    depends_on:
+      - consul5-node
+
+  udp-lan-1:
+    image: alpine/socat:1.8.1.3
+    network_mode: "service:toxiproxy1"
+    command: "UDP4-LISTEN:8301,reuseaddr,fork UDP4:10.99.0.2:8301"
+    depends_on:
+      - toxiproxy1
+
+  udp-wan-1:
+    image: alpine/socat:1.8.1.3
+    network_mode: "service:toxiproxy1"
+    command: "UDP4-LISTEN:8302,reuseaddr,fork UDP4:10.99.0.2:8302"
+    depends_on:
+      - toxiproxy1
+
+  udp-lan-2:
+    image: alpine/socat:1.8.1.3
+    network_mode: "service:toxiproxy2"
+    command: "UDP4-LISTEN:8301,reuseaddr,fork UDP4:10.99.0.3:8301"
+    depends_on:
+      - toxiproxy2
+
+  udp-wan-2:
+    image: alpine/socat:1.8.1.3
+    network_mode: "service:toxiproxy2"
+    command: "UDP4-LISTEN:8302,reuseaddr,fork UDP4:10.99.0.3:8302"
+    depends_on:
+      - toxiproxy2
+
+  udp-lan-3:
+    image: alpine/socat:1.8.1.3
+    network_mode: "service:toxiproxy3"
+    command: "UDP4-LISTEN:8301,reuseaddr,fork UDP4:10.99.0.4:8301"
+    depends_on:
+      - toxiproxy3
+
+  udp-wan-3:
+    image: alpine/socat:1.8.1.3
+    network_mode: "service:toxiproxy3"
+    command: "UDP4-LISTEN:8302,reuseaddr,fork UDP4:10.99.0.4:8302"
+    depends_on:
+      - toxiproxy3
+
+  udp-lan-4:
+    image: alpine/socat:1.8.1.3
+    network_mode: "service:toxiproxy4"
+    command: "UDP4-LISTEN:8301,reuseaddr,fork UDP4:10.99.0.5:8301"
+    depends_on:
+      - toxiproxy4
+
+  udp-wan-4:
+    image: alpine/socat:1.8.1.3
+    network_mode: "service:toxiproxy4"
+    command: "UDP4-LISTEN:8302,reuseaddr,fork UDP4:10.99.0.5:8302"
+    depends_on:
+      - toxiproxy4
+
+  udp-lan-5:
+    image: alpine/socat:1.8.1.3
+    network_mode: "service:toxiproxy5"
+    command: "UDP4-LISTEN:8301,reuseaddr,fork UDP4:10.99.0.6:8301"
+    depends_on:
+      - toxiproxy5
+
+  udp-wan-5:
+    image: alpine/socat:1.8.1.3
+    network_mode: "service:toxiproxy5"
+    command: "UDP4-LISTEN:8302,reuseaddr,fork UDP4:10.99.0.6:8302"
+    depends_on:
+      - toxiproxy5
+
+configs:
+  toxiproxy1_config:
+    content: |
+      [
+        {"name":"consul1",      "listen":"0.0.0.0:8300","upstream":"consul1-node:8300"},
+        {"name":"consul1-serf", "listen":"0.0.0.0:8301","upstream":"consul1-node:8301"},
+        {"name":"consul1-wan",  "listen":"0.0.0.0:8302","upstream":"consul1-node:8302"}
+      ]
+  toxiproxy2_config:
+    content: |
+      [
+        {"name":"consul2",      "listen":"0.0.0.0:8300","upstream":"consul2-node:8300"},
+        {"name":"consul2-serf", "listen":"0.0.0.0:8301","upstream":"consul2-node:8301"},
+        {"name":"consul2-wan",  "listen":"0.0.0.0:8302","upstream":"consul2-node:8302"}
+      ]
+  toxiproxy3_config:
+    content: |
+      [
+        {"name":"consul3",      "listen":"0.0.0.0:8300","upstream":"consul3-node:8300"},
+        {"name":"consul3-serf", "listen":"0.0.0.0:8301","upstream":"consul3-node:8301"},
+        {"name":"consul3-wan",  "listen":"0.0.0.0:8302","upstream":"consul3-node:8302"}
+      ]
+  toxiproxy4_config:
+    content: |
+      [
+        {"name":"consul4",      "listen":"0.0.0.0:8300","upstream":"consul4-node:8300"},
+        {"name":"consul4-serf", "listen":"0.0.0.0:8301","upstream":"consul4-node:8301"},
+        {"name":"consul4-wan",  "listen":"0.0.0.0:8302","upstream":"consul4-node:8302"}
+      ]
+
+  toxiproxy5_config:
+    content: |
+      [
+        {"name":"consul5",      "listen":"0.0.0.0:8300","upstream":"consul5-node:8300"},
+        {"name":"consul5-serf", "listen":"0.0.0.0:8301","upstream":"consul5-node:8301"},
+        {"name":"consul5-wan",  "listen":"0.0.0.0:8302","upstream":"consul5-node:8302"}
+      ]
