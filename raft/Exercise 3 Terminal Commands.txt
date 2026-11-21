@@ -1,0 +1,25 @@
+#showed the interface for each consul node
+for node in consul1 consul2 consul3 consul4 consul5; do
+    index=$(sudo docker exec "$node-node" cat /sys/class/net/eth0/iflink)
+    interface=$(ip -o link show | awk -v n="$index" '$1 == n":" {print $2}')
+    echo "$node: $interface"
+done
+
+___
+
+#after getting each interface, can set packet loss percent after each trial
+for iface in veth18930ce veth5a0332c vethd3a09e2 veth1523eac veth8a92657; do
+    sudo tc qdisc replace dev "$iface" root netem loss 5% #(10%/25%)
+done
+
+___
+
+#shows the tc rules for verification
+sudo tc qdisc show dev veth5a0332c
+
+___
+
+#gets rid of any current tc rules
+for iface in veth18930ce veth5a0332c vethd3a09e2 veth1523eac veth8a92657; do
+    sudo tc qdisc del dev "$iface" root 2>/dev/null
+done

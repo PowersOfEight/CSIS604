@@ -1,0 +1,57 @@
+#let me get the necessary raft metrics used in the fig 
+
+for node in consul1 consul2 consul3 consul4 consul5; do
+    echo "===== $node ====="
+    sudo docker exec "$node-node" consul info |
+        sed -n '/^raft:/,/^runtime:/p' |
+        grep -E 'state =|^[[:space:]]*term =|last_log_index =|last_log_term =|commit_index =|applied_index ='
+done
+
+___
+
+#particular IPs of the consul nodes, configured firewall settings blocking minority and majority communication
+
+MINORITY=(3 6 11 14)
+MAJORITY=(2 4 5 10 12 13)
+
+for a in "${MINORITY[@]}"; do
+  for b in "${MAJORITY[@]}"; do
+    sudo iptables -I DOCKER-USER -s 10.99.0.$a -d 10.99.0.$b -j DROP
+    sudo iptables -I DOCKER-USER -s 10.99.0.$b -d 10.99.0.$a -j DROP
+  done
+done
+
+___
+
+#get raft metrics/check leader status
+sudo docker exec consul3-node consul operator raft list-peers
+
+___
+
+#test the writing capabilities, minority shouldn't be able to
+sudo docker exec consul4-node consul kv put exercise2/retest-majority "majority-write"
+sudo docker exec consul2-node consul kv put exercise2/retest-minority "minority-write"
+
+___
+
+#reset the firewall settings
+MINORITY=(3 6 11 14)
+MAJORITY=(2 4 5 10 12 13)
+
+for a in "${MINORITY[@]}"; do
+  for b in "${MAJORITY[@]}"; do
+    sudo iptables -D DOCKER-USER -s 10.99.0.$a -d 10.99.0.$b -j DROP
+    sudo iptables -D DOCKER-USER -s 10.99.0.$b -d 10.99.0.$a -j DROP
+  done
+done
+
+___
+
+#check the status again/synch logs
+sudo docker exec consul4-node consul operator raft list-peers
+
+___
+
+#check writing/ minority should have nothing committed
+sudo docker exec consul4-node consul kv get exercise2/retest-majority
+sudo docker exec consul4-node consul kv get exercise2/retest-minority
